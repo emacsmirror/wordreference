@@ -247,10 +247,8 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
                    'face font-lock-comment-face))
       (setq-local wordreference-results-info
                   `(term ,word
-                         source ,(plist-get
-                                  (car pr-trs-results-list) :source)
-                         target ,(plist-get
-                                  (car pr-trs-results-list) :target)))
+                         source ,source-lang
+                         target ,target-lang))
       (wordreference--make-buttons)
       (wordreference-prop-query-in-results word)
       (goto-char (point-min))))

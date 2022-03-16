@@ -485,16 +485,17 @@ Word or phrase at point is determined by button text property."
   "Open the current results in external browser.
 Uses `wordreference-browse-url-function' to decide which browser to use."
   (interactive)
-  (let* ((url ((format "https://www.wordreference.com/%s%s/"
+  (let* ((url (concat wordreference-base-url
+                      (format "/%s%s/"
                       wordreference-source-lang
-                      wordreference-target-lang))
+                      wordreference-target-lang)))
          (word (plist-get wordreference-results-info 'term))
          (search-url (concat url word))
          (browse-url-browser-function (or wordreference-browse-url-function
                                           (when (browse-url-can-use-xdg-open)
                                             '(browse-url-xdg-open))
                                           browse-url-secondary-browser-function
-                                          browse-url-browser-function))))
+                                          browse-url-browser-function)))
     (browse-url search-url)))
 
 (defun wordreference-copy-search-term ()

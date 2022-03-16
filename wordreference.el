@@ -152,9 +152,7 @@
       ;; (setq wordreference-full-pr-trs-list pr-trs-results-list)
       ;; (setq wordreference-full-sup-trs-list sup-trs-results-list)
       (erase-buffer)
-      ;; (special-mode)
       (wordreference-mode)
-      (switch-to-buffer-other-window (current-buffer))
       (wordreference-print-trs-results pr-trs-results-list)
       (insert "\n")
       (when sup-trs-table
@@ -168,7 +166,10 @@
                    'face font-lock-comment-face))
       (wordreference--make-buttons)
       (wordreference-prop-query-in-results word)
-      (goto-char (point-min)))))
+      (goto-char (point-min))))
+  ;; handle searching again from wr:
+  (when (not (equal (buffer-name (current-buffer)) "*wordreference*"))
+    (switch-to-buffer-other-window (get-buffer "*wordreference*"))))
 
 
 ;; PRINTING:

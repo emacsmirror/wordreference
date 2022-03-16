@@ -106,7 +106,7 @@
         (t
          `(:other ,(dom-texts td)))))
 
-(defun wr-collect-trs-results-list (trs)
+(defun wordreference-collect-trs-results-list (trs)
   ""
   (mapcar (lambda (tr)
             (wordreference--build-tds-text-list tr))
@@ -122,24 +122,24 @@
            (word-tables (wordreference--get-word-tables tables))
            (pr-table (cadr word-tables))
            (pr-trs (wordreference--get-trs pr-table))
-           (pr-trs-results-list (wr-collect-trs-results-list pr-trs))
+           (pr-trs-results-list (wordreference-collect-trs-results-list pr-trs))
            (sup-trs-table (cadddr word-tables))
            (sup-trs (wordreference--get-trs sup-trs-table))
-           (sup-trs-results-list (wr-collect-trs-results-list sup-trs)))
-      ;; (setq wr-word-tables word-tables)
-      ;; (setq wr-full-html html-parsed)
-      ;; (setq wr-full-tables word-tables)
-      ;; (setq wr-single-tr (caddr (wordreference--get-trs pr-table)))
-      ;; (setq wr-full-pr-trs-list pr-trs-results-list)
-      ;; (setq wr-full-sup-trs-list sup-trs-results-list)
+           (sup-trs-results-list (wordreference-collect-trs-results-list sup-trs)))
+      ;; (setq wordreference-word-tables word-tables)
+      ;; (setq wordreference-full-html html-parsed)
+      ;; (setq wordreference-full-tables word-tables)
+      ;; (setq wordreference-single-tr (caddr (wordreference--get-trs pr-table)))
+      ;; (setq wordreference-full-pr-trs-list pr-trs-results-list)
+      ;; (setq wordreference-full-sup-trs-list sup-trs-results-list)
       (erase-buffer)
       ;; (special-mode)
       (wordreference-mode)
       (switch-to-buffer-other-window (current-buffer))
-      (wr-print-trs-results pr-trs-results-list)
+      (wordreference-print-trs-results pr-trs-results-list)
       (insert "\n")
       (when sup-trs-table
-        (wr-print-trs-results sup-trs-results-list))
+        (wordreference-print-trs-results sup-trs-results-list))
       (setq-local header-line-format
                   (propertize
                    (format "Wordreference results for \"%s\" from %s to %s:"
@@ -147,14 +147,14 @@
                            wordreference-source-lang
                            wordreference-target-lang)
                    'face font-lock-comment-face))
-      (wr--make-buttons)
-      (wr-prop-query-in-results word)
+      (wordreference--make-buttons)
+      (wordreference-prop-query-in-results word)
       (goto-char (point-min)))))
 
 
 ;; PRINTING:
 
-(defun wr-prop-query-in-results (word)
+(defun wordreference-prop-query-in-results (word)
   "Propertize query WORD in results buffer."
   (let ((word-spl (split-string word)))
     (save-excursion
@@ -167,14 +167,14 @@
               (goto-char (point-min)))
             word-spl))))
 
-(defun wr-print-heading (heading)
+(defun wordreference-print-heading (heading)
   ""
   (insert (propertize heading
                       'heading t
                       'face '((t :inherit font-lock-function-name-face
                                  :weight bold)))))
 
-(defun wr-print-trs-results (trs)
+(defun wordreference-print-trs-results (trs)
   ""
   (let* ((table-name (plist-get (caar trs) :other))
          (langs (cadr trs))
@@ -182,19 +182,19 @@
          (target (caaddr langs))
          (definitions (cddr trs)))
     (when table-name
-      (wr-print-heading table-name))
+      (wordreference-print-heading table-name))
     (if definitions
-        (wr-print-definitions definitions)
-      (insert "looks like wr returned nada."))))
+        (wordreference-print-definitions definitions)
+      (insert "looks like wordreference returned nada."))))
 
-(defun wr-print-definitions (defs)
+(defun wordreference-print-definitions (defs)
   ""
   (mapc (lambda (def)
-            (wr-print-single-definition def))
+            (wordreference-print-single-definition def))
           defs)
   (insert "\n"))
 
-(defun wr--cull-double-spaces (result)
+(defun wordreference--cull-double-spaces (result)
   "Remove any double spaces from RESULT."
   (save-match-data
     (while (string-match "[[:blank:]]\\{2\\}"
@@ -204,7 +204,7 @@
                     t nil result))))
   result)
 
-(defun wr--cull-single-spaces-in-brackets (result)
+(defun wordreference--cull-single-spaces-in-brackets (result)
   "Remove any spaces inside brackets from RESULT."
   (save-match-data
     (while (string-match
@@ -216,7 +216,7 @@
                     t nil result))))
   result)
 
-(defun wr--cull-space-between-brackets (result)
+(defun wordreference--cull-space-between-brackets (result)
   "Remove any spaces between closing brackets from RESULT."
   (save-match-data
     (while (string-match
@@ -228,26 +228,26 @@
                     t nil result))))
   result)
 
-(defun wr-print-single-definition (def)
+(defun wordreference-print-single-definition (def)
   "Print a single definition DEF in the buffer.
 \nFor now a definition can be a set of source term, context term,
 and target term, or an example sentence."
   (let* ((source (car def))
          (source-term-untrimmed (or (plist-get source :from) ; new term
                                     (plist-get source :other))) ; repeat term
-         (source-term (wr--cull-double-spaces
+         (source-term (wordreference--cull-double-spaces
                        (string-trim source-term-untrimmed)))
          (source-pos (plist-get source :pos))
          (context (cadr def))
          (context-term-untrimmed (plist-get context :other))
          (context-term (when context-term-untrimmed
-                         (wr--cull-double-spaces
-                          (wr--cull-single-spaces-in-brackets
-                           (wr--cull-space-between-brackets
+                         (wordreference--cull-double-spaces
+                          (wordreference--cull-single-spaces-in-brackets
+                           (wordreference--cull-space-between-brackets
                             (string-trim context-term-untrimmed))))))
          (target (caddr def))
          (target-term
-          (when target (wr--cull-double-spaces
+          (when target (wordreference--cull-double-spaces
                         (string-trim
                          (plist-get target :to)))))
          (target-pos (plist-get target :pos))
@@ -327,7 +327,7 @@ and target term, or an example sentence."
             (recenter-top-bottom 3))
         (message "No more headings.")))))
 
-(defun wr--make-buttons ()
+(defun wordreference--make-buttons ()
   "Make all property ranges with button property into buttons."
   (with-current-buffer (get-buffer "*wordreference*")
     (let ((inhibit-read-only t))

@@ -47,6 +47,25 @@
 (defvar wordreference-target-lang "en"
   "Default target language.")
 
+(defvar wordreference-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "TAB") #'forward-button)
+    (define-key map (kbd "<backtab>") #'backward-button)
+    (define-key map (kbd "w") #'wordreference-search)
+    ;; (define-key map (kbd "b") #'wordreference-browse-url-results)
+    (define-key map (kbd ",") #'wordreference-previous-heading)
+    (define-key map (kbd ".") #'wordreference-next-heading)
+    (define-key map (kbd "RET") #'wordreference--return-search-word)
+    ;; (define-key map (kbd "f") #'wordreference-jump-to-forum-results)
+    map)
+  "Keymap for wordreference mode.")
+
+(defvar wordreference-result-search-map
+  (let ((map (make-sparse-keymap)))
+    ;; (define-key map [mouse-2] #'wordreference--click-search-word)
+    (define-key map (kbd "RET") #'wordreference--return-search-word)
+    map))
+
 
 ;; REQUESTING AND PARSING
 
@@ -79,7 +98,7 @@
 (defun wordreference--build-tds-text-list (tr)
   "Return a list of results of both source and target langs from TR."
   (let ((tds (dom-by-tag tr 'td)))
-    (setq wr-single-td (caddr tds))
+    ;; (setq wr-single-td (caddr tds))
     (mapcar (lambda (x)
               (wr-build-single-td-list x))
             tds)))
@@ -274,6 +293,7 @@ and target term, or an example sentence."
                  (propertize
                   source-term
                   'button t
+                  'keymap wordreference-result-search-map
                   'face '((t :inherit warning)))))))
           " "
           (propertize (or source-pos
@@ -290,6 +310,7 @@ and target term, or an example sentence."
           (when target-term
             (propertize target-term
                         'button t
+                        'keymap wordreference-result-search-map
                         'face '((t :inherit warning))))
           " "
           (propertize (or target-pos
@@ -338,17 +359,17 @@ and target term, or an example sentence."
            (goto-char (next-single-property-change (point) 'button))
            (goto-char (next-single-property-change (point) 'button))))))))
 
-(defvar wordreference-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "TAB") #'forward-button)
-    (define-key map (kbd "<backtab>") #'backward-button)
-    (define-key map (kbd "w") #'wordreference-search)
-    ;; (define-key map (kbd "b") #'wordreference-browse-url-results)
-    (define-key map (kbd ",") #'wordreference-previous-heading)
-    (define-key map (kbd ".") #'wordreference-next-heading)
-    ;; (define-key map (kbd "f") #'wordreference-jump-to-forum-results)
-    map)
-  "Keymap for wordreference mode.")
+(defun wordreference--return-search-word ()
+  "Translate word or phrase at point.
+Word or phrase at point is determined by button text property."
+  (interactive)
+  (let ((text (buffer-substring-no-properties
+               (progn
+                 (if (looking-back "[ \t\n]" nil) ; enter range if we tabbed here
+                     (forward-char))
+                 (previous-single-property-change (point) 'button)) ; range start
+               (next-single-property-change (point) 'button))))
+    (wordreference-search text)))
 
 (define-derived-mode wordreference-mode special-mode "wordreference"
   :group 'wordreference

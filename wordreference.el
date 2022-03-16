@@ -41,18 +41,62 @@
 (require 'browse-url)
 (require 'text-property-search)
 
+(defgroup wordreference nil
+  "Wordreference dictionary interface."
+  :group 'wordreference)
+
+(defcustom wordreference-browse-url-function nil
+  "The browser that is used to access online dictionaries."
+  :group 'wordreference
+  :type '(choice
+          (const         :tag "Default" :value nil)
+          (function-item :tag "Emacs W3" :value  browse-url-w3)
+          (function-item :tag "W3 in another Emacs via `gnudoit'"
+                         :value  browse-url-w3-gnudoit)
+          (function-item :tag "Mozilla" :value  browse-url-mozilla)
+          (function-item :tag "Firefox" :value browse-url-firefox)
+          (function-item :tag "Chromium" :value browse-url-chromium)
+          (function-item :tag "Gawordreferencen" :value  browse-url-gawordreferencen)
+          (function-item :tag "Epiphany" :value  browse-url-epiphany)
+          (function-item :tag "Netscape" :value  browse-url-netscape)
+          (function-item :tag "eww" :value  eww-browse-url)
+          (function-item :tag "Text browser in an xterm window"
+                         :value browse-url-text-xterm)
+          (function-item :tag "Text browser in an Emacs window"
+                         :value browse-url-text-emacs)
+          (function-item :tag "KDE" :value browse-url-kde)
+          (function-item :tag "Elinks" :value browse-url-elinks)
+          (function-item :tag "Specified by `Browse Url Generic Program'"
+                         :value browse-url-generic)
+          (function-item :tag "Default Windows browser"
+                         :value browse-url-default-windows-browser)
+          (function-item :tag "Default Mac OS X browser"
+                         :value browse-url-default-macosx-browser)
+          (function-item :tag "GNOME invoking Mozilla"
+                         :value browse-url-gnome-moz)
+          (function-item :tag "Default browser"
+                         :value browse-url-default-browser)
+          (function      :tag "Your own function")
+          (alist         :tag "Regexp/function association list"
+                         :key-type regexp :value-type function)))
+
 (defvar wordreference-source-lang "fr"
   "Default source language.")
 
 (defvar wordreference-target-lang "en"
   "Default target language.")
 
+(defvar wordreference-results-info nil
+  "Information about the current results from a word reference search.
+Used to store search term for `wordreference-leo-browse-url-results'.")
+(make-variable-buffer-local 'wordreference-results-info)
+
 (defvar wordreference-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "TAB") #'forward-button)
     (define-key map (kbd "<backtab>") #'backward-button)
     (define-key map (kbd "w") #'wordreference-search)
-    ;; (define-key map (kbd "b") #'wordreference-browse-url-results)
+    (define-key map (kbd "b") #'wordreference-browse-url-results)
     (define-key map (kbd ",") #'wordreference-previous-heading)
     (define-key map (kbd ".") #'wordreference-next-heading)
     (define-key map (kbd "RET") #'wordreference--return-search-word)
@@ -164,6 +208,7 @@
                            wordreference-source-lang
                            wordreference-target-lang)
                    'face font-lock-comment-face))
+      (setq-local wordreference-results-info `(term ,word))
       (wordreference--make-buttons)
       (wordreference-prop-query-in-results word)
       (goto-char (point-min))))
@@ -371,6 +416,22 @@ Word or phrase at point is determined by button text property."
                  (previous-single-property-change (point) 'button)) ; range start
                (next-single-property-change (point) 'button))))
     (wordreference-search text)))
+
+(defun wordreference-browse-url-results ()
+  "Open the current results in external browser.
+Uses `wordreference-browse-url-function' to decide which browser to use."
+  (interactive)
+  (let* ((url (format "https://www.wordreference.com/%s%s/"
+                      wordreference-source-lang
+                      wordreference-target-lang))
+         (word (plist-get wordreference-results-info 'term))
+         (search-url (concat url word))
+         (browse-url-browser-function (or wordreference-browse-url-function
+                                          (when (browse-url-can-use-xdg-open)
+                                            '(browse-url-xdg-open)
+                                          browse-url-secondary-browser-function
+                                          browse-url-browser-function)))
+    (browse-url search-url)))
 
 (define-derived-mode wordreference-mode special-mode "wordreference"
   :group 'wordreference

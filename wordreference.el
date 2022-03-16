@@ -509,12 +509,11 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
 (defun wordreference-switch-source-target-and-search ()
   ""
   (interactive)
-  (let ((wordreference-source-lang wordreference-target-lang)
-        (wordreference-target-lang wordreference-source-lang)
+  (let ((word-reference-target-lang (plist-get wordreference-results-info 'source))
+        (wordreference-source-lang (plist-get wordreference-results-info 'target))
         (term (plist-get wordreference-results-info 'term)))
     (wordreference-search term)))
 
-;;TODO: store and print actual conj icons so we know what terms have them
 (defun wordreference-browse-conjugation-for-term ()
   ""
   (interactive)

@@ -214,7 +214,8 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
       (goto-char (point-min))))
   ;; handle searching again from wr:
   (when (not (equal (buffer-name (current-buffer)) "*wordreference*"))
-    (switch-to-buffer-other-window (get-buffer "*wordreference*"))))
+    (switch-to-buffer-other-window (get-buffer "*wordreference*")))
+  (message "w: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms"))
 
 
 ;; PRINTING:
@@ -340,6 +341,7 @@ and target term, or an example sentence."
                   source-term
                   'button t
                   'keymap wordreference-result-search-map
+                  'help-echo "RET to search wordreference for this term"
                   'face '((t :inherit warning)))))))
           " "
           (propertize (or source-pos
@@ -357,6 +359,7 @@ and target term, or an example sentence."
             (propertize target-term
                         'button t
                         'keymap wordreference-result-search-map
+                        'help-echo "RET to search wordreference for this term"
                         'face '((t :inherit warning))))
           " "
           (propertize (or target-pos
@@ -408,6 +411,7 @@ and target term, or an example sentence."
 (defun wordreference--return-search-word ()
   "Translate word or phrase at point.
 Word or phrase at point is determined by button text property."
+  ;;TODO: make this work with word at point
   (interactive)
   (let ((text (buffer-substring-no-properties
                (progn

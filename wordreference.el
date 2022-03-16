@@ -97,6 +97,7 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
     (define-key map (kbd "<backtab>") #'backward-button)
     (define-key map (kbd "w") #'wordreference-search)
     (define-key map (kbd "b") #'wordreference-browse-url-results)
+    (define-key map (kbd "c") #'wordreference-copy-search-term)
     (define-key map (kbd ",") #'wordreference-previous-heading)
     (define-key map (kbd ".") #'wordreference-next-heading)
     (define-key map (kbd "RET") #'wordreference--return-search-word)
@@ -215,7 +216,7 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
   ;; handle searching again from wr:
   (when (not (equal (buffer-name (current-buffer)) "*wordreference*"))
     (switch-to-buffer-other-window (get-buffer "*wordreference*")))
-  (message "w: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms"))
+  (message "w: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms, c: copy search term."))
 
 
 ;; PRINTING:
@@ -436,6 +437,13 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
                                           browse-url-secondary-browser-function
                                           browse-url-browser-function)))
     (browse-url search-url)))
+
+(defun wordreference-copy-search-term ()
+  "Copy current search term to the kill ring."
+  (interactive)
+  (let ((term (plist-get wordreference-results-info 'term)))
+    (kill-new term)
+    (message (concat "\"" term "\" copied to clipboard."))))
 
 (define-derived-mode wordreference-mode special-mode "wordreference"
   :group 'wordreference

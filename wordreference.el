@@ -147,6 +147,32 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
 (defun wordreference--get-trs (word-table)
   (dom-children word-table))
 
+(defun wordreference-extract-lang-code-from-td (td)
+  ""
+  ;; format is "sLang_en"
+  (substring-no-properties
+   (dom-attr
+    (dom-by-tag td 'span)
+    'data-ph)
+   -2)) ;last two chars
+
+(defun wordreference-collect-trs-results-list (trs)
+  ""
+  (let* ((title-tr (car trs))
+         (langs-tr (cadr trs))
+         (source-td (dom-by-class langs-tr "FrWrd"))
+         (source-word (dom-texts source-td))
+         (source-abbrev (wordreference-extract-lang-code-from-td source-td))
+         (target-td (dom-by-class langs-tr "ToWrd"))
+         (target-word (dom-texts target-td))
+         (target-abbrev (wordreference-extract-lang-code-from-td target-td))
+         (words-trs (cddr trs)))
+    (list
+     `(:title ,(dom-texts title-tr) :source ,source-abbrev :target ,target-abbrev)
+     (mapcar (lambda (tr)
+               (wordreference--build-tds-text-list tr))
+             words-trs))))
+
 (defun wordreference--build-tds-text-list (tr)
   "Return a list of results of both source and target langs from TR."
   (let ((tds (dom-by-tag tr 'td)))
@@ -168,20 +194,18 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
                 (tooltip-text (dom-texts tooltip))
                 (term-text
                  (if (dom-by-class td "FrWrd")
-                     (dom-text (dom-by-tag td 'strong))
-                   (dom-text td))))
-           `(,to-or-from ,term-text :pos ,pos :tooltip ,tooltip-text)))
+                     (dom-texts (dom-by-tag td 'strong))
+                   (dom-text td)))
+                (conj (dom-by-tag
+                       (dom-by-tag td 'strong)
+                       'a))
+                (conj-link-suffix (dom-attr conj 'href)))
+           `(,to-or-from ,term-text :pos ,pos :tooltip ,tooltip-text :conj ,conj-link-suffix)))
         ((or (dom-by-class td "ToEx")
              (dom-by-class td "FrEx"))
          `(:example ,(dom-texts td)))
         (t
          `(:other ,(dom-texts td)))))
-
-(defun wordreference-collect-trs-results-list (trs)
-  ""
-  (mapcar (lambda (tr)
-            (wordreference--build-tds-text-list tr))
-          trs))
 
 (defun wordreference-search (word)
   ""
@@ -216,7 +240,12 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
                            wordreference-source-lang
                            wordreference-target-lang)
                    'face font-lock-comment-face))
-      (setq-local wordreference-results-info `(term ,word))
+      (setq-local wordreference-results-info
+                  `(term ,word
+                         source ,(plist-get
+                                  (car pr-trs-results-list) :source)
+                         target ,(plist-get
+                                  (car pr-trs-results-list) :target)))
       (wordreference--make-buttons)
       (wordreference-prop-query-in-results word)
       (goto-char (point-min))))
@@ -250,11 +279,11 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
 
 (defun wordreference-print-trs-results (trs)
   ""
-  (let* ((table-name (plist-get (caar trs) :other))
-         (langs (cadr trs))
-         (source (caar langs))
-         (target (caaddr langs))
-         (definitions (cddr trs)))
+  (let* ((info (car trs))
+         (table-name (plist-get info :title))
+         (source (plist-get info :source))
+         (target (plist-get info :target))
+         (definitions (cadr trs)))
     (when table-name
       (wordreference-print-heading table-name))
     (if definitions
@@ -312,6 +341,7 @@ and target term, or an example sentence."
          (source-term (wordreference--cull-double-spaces
                        (string-trim source-term-untrimmed)))
          (source-pos (plist-get source :pos))
+         (source-conj (plist-get source :conj))
          (context (cadr def))
          (context-term-untrimmed (plist-get context :other))
          (context-term (when context-term-untrimmed
@@ -325,6 +355,7 @@ and target term, or an example sentence."
                         (string-trim
                          (plist-get target :to)))))
          (target-pos (plist-get target :pos))
+         (target-conj (plist-get target :conj))
          (eg (cond ((string= (plist-get source :other) " ")
                     (plist-get context :example))
                    ;; process "Note" as eg, not as source-term:
@@ -353,7 +384,23 @@ and target term, or an example sentence."
                   'help-echo "RET to search wordreference for this term"
                   'face '((t :inherit warning)))))))
           " "
-          (propertize (or source-pos
+          (when source-conj
+            (concat
+             (propertize
+              (if (fontp (char-displayable-p #10r9638))
+                  "▦"
+                "#")
+              'button t
+              'follow-link t
+              'shr-url (concat wordreference-base-url source-conj)
+              'keymap leo-inflexion-table-map
+              'fontified t
+              'face 'leo-auxiliary-face
+              'mouse-face 'highlight
+              'help-echo (concat "Browse inflexion table for '"
+                                 source-term "'"))
+             " "))
+         (propertize (or source-pos
                           "")
                       'face font-lock-comment-face)
           " "

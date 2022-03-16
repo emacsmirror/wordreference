@@ -121,13 +121,15 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
 
 ;; REQUESTING AND PARSING
 
-(defun wordreference--retrieve-parse-html (word)
+(defun wordreference--retrieve-parse-html (word &optional source target)
   "Query wordreference.com for WORD, and parse the HTML response."
   (let* ((url (concat wordreference-base-url
                       (format "/%s%s/%s"
-                      wordreference-source-lang
-                      wordreference-target-lang
-                      word)))
+                              (or source
+                                  wordreference-source-lang)
+                              (or target
+                                  wordreference-target-lang)
+                              word)))
 	 (html-buffer (url-retrieve-synchronously url)))
     (with-current-buffer html-buffer
       (goto-char (point-min))
@@ -150,7 +152,7 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
 
 (defun wordreference-extract-lang-code-from-td (td)
   ""
-  ;; format is "sLang_en"
+  ;; format is "sLang_en", but is it always?
   (when td
   (substring-no-properties
    (dom-attr
@@ -210,12 +212,12 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
          `(:other ,(dom-texts td)))))
 
 ;;;###autoload
-(defun wordreference-search (word)
+(defun wordreference-search (word &optional source target)
   ""
   (interactive "MWordreference search: ")
   (with-current-buffer (get-buffer-create "*wordreference*")
     (let* ((inhibit-read-only t)
-           (html-parsed (wordreference--retrieve-parse-html word))
+           (html-parsed (wordreference--retrieve-parse-html word source target))
            (tables (wordreference--get-tables html-parsed))
            (word-tables (wordreference--get-word-tables tables))
            (pr-table (cadr word-tables))
@@ -243,8 +245,8 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
                   (propertize
                    (format "Wordreference results for \"%s\" from %s to %s:"
                            word
-                           wordreference-source-lang
-                           wordreference-target-lang)
+                           source-lang
+                           target-lang)
                    'face font-lock-comment-face))
       (setq-local wordreference-results-info
                   `(term ,word
@@ -313,6 +315,7 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
 
 (defun wordreference--cull-single-spaces-in-brackets (result)
   "Remove any spaces inside brackets from RESULT."
+  ;;TODO: rewrite to handle single spaces also
   (save-match-data
     (while (string-match
             ;; ( + SPC + any number of chars + SPC + ):
@@ -469,18 +472,29 @@ and target term, or an example sentence."
            (goto-char (next-single-property-change (point) 'button))
            (goto-char (next-single-property-change (point) 'button))))))))
 
+(defun wordreference-get-results-info-item (item)
+  ""
+  (plist-get wordreference-results-info item))
+
 (defun wordreference--return-search-word ()
   "Translate word or phrase at point.
 Word or phrase at point is determined by button text property."
   ;;TODO: make this work with word at point
   (interactive)
-  (let ((text (buffer-substring-no-properties
-               (progn
-                 (if (looking-back "[ \t\n]" nil) ; enter range if we tabbed here
-                     (forward-char))
-                 (previous-single-property-change (point) 'button)) ; range start
-               (next-single-property-change (point) 'button))))
-    (wordreference-search text)))
+  (let* ((text (buffer-substring-no-properties
+                (progn
+                  (if (looking-back "[ \t\n]" nil) ; enter range if we tabbed here
+                      (forward-char))
+                  (previous-single-property-change (point) 'button)) ; range start
+                (next-single-property-change (point) 'button)))
+         (text-type (get-text-property (point) 'type))
+         (text-lang (if (equal text-type 'source)
+                        (wordreference-get-results-info-item 'source)
+                      (wordreference-get-results-info-item 'target)))
+         (other-lang (if (equal text-type 'source)
+                         (wordreference-get-results-info-item 'target)
+                       (wordreference-get-results-info-item 'source))))
+    (wordreference-search text text-lang other-lang)))
 
 (defun wordreference-browse-url-results ()
   "Open the current results in external browser.

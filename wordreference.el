@@ -209,6 +209,7 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
         (t
          `(:other ,(dom-texts td)))))
 
+;;;###autoload
 (defun wordreference-search (word)
   ""
   (interactive "MWordreference search: ")

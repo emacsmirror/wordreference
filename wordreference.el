@@ -129,6 +129,7 @@
 (defun wr-print-heading (heading)
   ""
   (insert (propertize heading
+                      'heading t
                       'face '((t :inherit font-lock-function-name-face
                                  :weight bold)))))
 
@@ -252,3 +253,34 @@ and target term, or an example sentence."
                           "")
                       'face font-lock-comment-face)
           ))))))
+
+
+;; NAVIGATION etc.
+
+(defun wordreference-next-heading ()
+  "Move point to next heading."
+  (interactive)
+  (save-match-data
+    (let ((match
+           (save-excursion
+             (text-property-search-forward 'heading ;NB 27.1!
+                                           t t t))))
+      (if match
+          (progn
+            (goto-char (prop-match-beginning match))
+            (recenter-top-bottom 3))
+        (message "No more headings.")))))
+
+(defun wordreference-next-heading ()
+  "Move point to previous heading."
+  (interactive)
+  (save-match-data
+    (let ((match
+           (save-excursion
+             (text-property-search-backward 'heading ;NB 27.1!
+                                            t t t))))
+      (if match
+          (progn
+            (goto-char (prop-match-beginning match))
+            (recenter-top-bottom 3))
+        (message "No more headings.")))))

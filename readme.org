@@ -1,0 +1,7 @@
+* wordreference.el
+
+This package allows you to query the dictionaries at https://wordreference.com from within emacs.
+
+For now it is pretty basic. It displays results, part of speech, example sentences, and notes.
+
+The sole entry point is =wordreference-search=.

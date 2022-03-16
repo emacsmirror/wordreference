@@ -36,6 +36,7 @@
 ;; nb: wr requires a user agent to return a request
 
 ;;; Code:
+(require 'xml)
 (require 'dom)
 (require 'shr)
 (require 'browse-url)

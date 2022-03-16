@@ -151,11 +151,12 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
 (defun wordreference-extract-lang-code-from-td (td)
   ""
   ;; format is "sLang_en"
+  (when td
   (substring-no-properties
    (dom-attr
     (dom-by-tag td 'span)
     'data-ph)
-   -2)) ;last two chars
+   -2))) ;last two chars
 
 (defun wordreference-collect-trs-results-list (trs)
   ""

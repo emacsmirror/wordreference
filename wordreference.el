@@ -496,7 +496,7 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
                                           (when (browse-url-can-use-xdg-open)
                                             '(browse-url-xdg-open))
                                           browse-url-secondary-browser-function
-                                          browse-url-browser-function)))
+                                          browse-url-browser-function))))
     (browse-url search-url)))
 
 (defun wordreference-copy-search-term ()

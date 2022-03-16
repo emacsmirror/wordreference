@@ -86,13 +86,9 @@
 (defvar wordreference-target-lang "en"
   "Default target language.")
 
-(defvar wordreference-conj-base-url
-  "https://www.wordreference.com/conj/"
-  "Base URL for conjugations.")
-
-(defvar wordreference-conj-url-query
-  "verbs.aspx?v="
-  "Query string part for conjugations.")
+(defvar wordreference-base-url
+  "https://www.wordreference.com"
+  "Base wordreference URL.")
 
 (defvar wordreference-results-info nil
   "Information about the current results from a word reference search.
@@ -126,15 +122,16 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
 
 (defun wordreference--retrieve-parse-html (word)
   "Query wordreference.com for WORD, and parse the HTML response."
-  (let* ((url (format "https://www.wordreference.com/%s%s/%s"
+  (let* ((url (concat wordreference-base-url
+                      (format "/%s%s/%s"
                       wordreference-source-lang
                       wordreference-target-lang
-                      word))
+                      word)))
 	 (html-buffer (url-retrieve-synchronously url)))
     (with-current-buffer html-buffer
       (goto-char (point-min))
       (libxml-parse-html-region
-       (search-forward "\n\n") (point-max)))));))
+       (search-forward "\n\n") (point-max)))))
 
 (defun wordreference--get-tables (dom)
   "Get tables from parsed HTML response DOM."
@@ -438,7 +435,7 @@ Word or phrase at point is determined by button text property."
   "Open the current results in external browser.
 Uses `wordreference-browse-url-function' to decide which browser to use."
   (interactive)
-  (let* ((url (format "https://www.wordreference.com/%s%s/"
+  (let* ((url ((format "https://www.wordreference.com/%s%s/"
                       wordreference-source-lang
                       wordreference-target-lang))
          (word (plist-get wordreference-results-info 'term))

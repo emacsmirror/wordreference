@@ -1,6 +1,45 @@
-;; wordreference.el  -*- coding: utf-8-emacs; -*-
+;;; wordreference.el --- Interface for wordreference.com -*- lexical-binding:t -*-
+;;
+;; Copyright (C) 2022 Marty Hiatt <martianhiatus AT riseup.net>
+;;
+;; Author: Marty Hiatt <martianhiatus AT riseup.net>
+;; Created: 21 Oct 2020
+;;
+;; Package-Requires: ((emacs "27.1"))
+;; Keywords: convenience, translate
+;; URL: https://codeberg.org/martianh/wordreference
+;; Version: 0.1
+;; Prefix: wordreference
+;; Separator: -
+
+;;; Commentary:
+;;
+;; A simple interface for wordreference.com.
+
+;;; License:
+;;
+;; This file is NOT part of GNU Emacs.
+;;
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;; nb: wr requires a user agent to return a request
+
+;;; Code:
+(require 'dom)
+(require 'shr)
+(require 'browse-url)
+(require 'text-property-search)
 
 (defvar wordreference-source-lang "fr"
   "Default source language.")
@@ -38,7 +77,7 @@
   (dom-children word-table))
 
 (defun wordreference--build-tds-text-list (tr)
-  "Returns a list of results of both source and target langs."
+  "Return a list of results of both source and target langs from TR."
   (let ((tds (dom-by-tag tr 'td)))
     (setq wr-single-td (caddr tds))
     (mapcar (lambda (x)
@@ -94,7 +133,8 @@
       ;; (setq wr-full-pr-trs-list pr-trs-results-list)
       ;; (setq wr-full-sup-trs-list sup-trs-results-list)
       (erase-buffer)
-      (special-mode)
+      ;; (special-mode)
+      (wordreference-mode)
       (switch-to-buffer-other-window (current-buffer))
       (wr-print-trs-results pr-trs-results-list)
       (insert "\n")
@@ -107,6 +147,7 @@
                            wordreference-source-lang
                            wordreference-target-lang)
                    'face font-lock-comment-face))
+      (wr--make-buttons)
       (wr-prop-query-in-results word)
       (goto-char (point-min)))))
 
@@ -114,7 +155,7 @@
 ;; PRINTING:
 
 (defun wr-prop-query-in-results (word)
-  "Add"
+  "Propertize query WORD in results buffer."
   (let ((word-spl (split-string word)))
     (save-excursion
       (goto-char (point-min))
@@ -148,7 +189,7 @@
 
 (defun wr-print-definitions (defs)
   ""
-  (mapcar (lambda (def)
+  (mapc (lambda (def)
             (wr-print-single-definition def))
           defs)
   (insert "\n"))
@@ -232,6 +273,7 @@ and target term, or an example sentence."
                  "\n\n"
                  (propertize
                   source-term
+                  'button t
                   'face '((t :inherit warning)))))))
           " "
           (propertize (or source-pos
@@ -247,12 +289,12 @@ and target term, or an example sentence."
                       'face font-lock-comment-face)
           (when target-term
             (propertize target-term
+                        'button t
                         'face '((t :inherit warning))))
           " "
           (propertize (or target-pos
                           "")
-                      'face font-lock-comment-face)
-          ))))))
+                      'face font-lock-comment-face)))))))
 
 
 ;; NAVIGATION etc.
@@ -271,7 +313,7 @@ and target term, or an example sentence."
             (recenter-top-bottom 3))
         (message "No more headings.")))))
 
-(defun wordreference-next-heading ()
+(defun wordreference-previous-heading ()
   "Move point to previous heading."
   (interactive)
   (save-match-data
@@ -284,3 +326,37 @@ and target term, or an example sentence."
             (goto-char (prop-match-beginning match))
             (recenter-top-bottom 3))
         (message "No more headings.")))))
+
+(defun wr--make-buttons ()
+  "Make all property ranges with button property into buttons."
+  (with-current-buffer (get-buffer "*wordreference*")
+    (let ((inhibit-read-only t))
+      (save-excursion
+        (goto-char (point-min))
+        (while (next-single-property-change (point) 'button)
+          (make-text-button
+           (goto-char (next-single-property-change (point) 'button))
+           (goto-char (next-single-property-change (point) 'button))))))))
+
+(defvar wordreference-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "TAB") #'forward-button)
+    (define-key map (kbd "<backtab>") #'backward-button)
+    (define-key map (kbd "w") #'wordreference-search)
+    ;; (define-key map (kbd "b") #'wordreference-browse-url-results)
+    (define-key map (kbd ",") #'wordreference-previous-heading)
+    (define-key map (kbd ".") #'wordreference-next-heading)
+    ;; (define-key map (kbd "f") #'wordreference-jump-to-forum-results)
+    ;; (define-key map (kbd "<") #'wordreference-translate-left-side-only)
+    ;; (define-key map (kbd ">") #'wordreference-translate-right-side-only)
+    ;; (when (require 'dictcc nil :noerror)
+      ;; (define-key map (kbd "c") #'wordreference--search-term-with-dictcc))
+    map)
+  "Keymap for wordreference mode.")
+
+(define-derived-mode wordreference-mode special-mode "wordreference"
+  :group 'wordreference
+  (read-only-mode 1))
+
+(provide 'wordreference)
+;;; wordreference.el ends here

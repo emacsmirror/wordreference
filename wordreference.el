@@ -220,8 +220,11 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
            (pr-trs (wordreference--get-trs pr-table))
            (pr-trs-results-list (wordreference-collect-trs-results-list pr-trs))
            (sup-trs-table (cadddr word-tables))
-           (sup-trs (wordreference--get-trs sup-trs-table))
-           (sup-trs-results-list (wordreference-collect-trs-results-list sup-trs)))
+           (sup-trs (when sup-trs-table
+                      (wordreference--get-trs sup-trs-table)))
+           (sup-trs-results-list (when sup-trs
+                                   (wordreference-collect-trs-results-list sup-trs))))
+      ;; Debugging:
       ;; (setq wordreference-word-tables word-tables)
       ;; (setq wordreference-full-html html-parsed)
       ;; (setq wordreference-full-tables word-tables)

@@ -347,10 +347,6 @@ and target term, or an example sentence."
     (define-key map (kbd ",") #'wordreference-previous-heading)
     (define-key map (kbd ".") #'wordreference-next-heading)
     ;; (define-key map (kbd "f") #'wordreference-jump-to-forum-results)
-    ;; (define-key map (kbd "<") #'wordreference-translate-left-side-only)
-    ;; (define-key map (kbd ">") #'wordreference-translate-right-side-only)
-    ;; (when (require 'dictcc nil :noerror)
-      ;; (define-key map (kbd "c") #'wordreference--search-term-with-dictcc))
     map)
   "Keymap for wordreference mode.")
 

@@ -432,7 +432,7 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
          (search-url (concat url word))
          (browse-url-browser-function (or wordreference-browse-url-function
                                           (when (browse-url-can-use-xdg-open)
-                                            '(browse-url-xdg-open)
+                                            '(browse-url-xdg-open))
                                           browse-url-secondary-browser-function
                                           browse-url-browser-function)))
     (browse-url search-url)))

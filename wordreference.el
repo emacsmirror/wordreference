@@ -210,9 +210,11 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
                  (if (dom-by-class td "FrWrd")
                      (dom-texts (dom-by-tag td 'strong))
                    (dom-text td)))
-                (conj (dom-by-tag
-                       (dom-by-tag td 'strong)
-                       'a))
+                (conj (if (dom-by-class td "FrWrd")
+                          (progn (dom-by-tag
+                                  (dom-by-tag td 'strong)
+                                  'a))
+                        (dom-by-tag td 'a)))
                 (conj-link-suffix (dom-attr conj 'href)))
            `(,to-or-from ,term-text :pos ,pos :tooltip ,tooltip-text :conj ,conj-link-suffix)))
         ((or (dom-by-class td "ToEx")
@@ -458,6 +460,23 @@ and target term, or an example sentence."
                         'keymap wordreference-result-search-map
                         'help-echo "RET to search wordreference for this term"
                         'face '((t :inherit warning))))
+          (when target-conj
+            (concat
+             " "
+             (propertize
+              (if (fontp (char-displayable-p #10r9638))
+                  "▦"
+                "#")
+              'button t
+              'follow-link t
+              'shr-url (concat wordreference-base-url target-conj)
+              'keymap wordreference-link-map
+              'fontified t
+              'face '((t :inherit font-lock-comment-face))
+              'mouse-face 'highlight
+              'help-echo (concat "Browse inflexion table for '"
+                                 source-term "'"))
+             ))
           " "
           (propertize (or target-pos
                           "")

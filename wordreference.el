@@ -131,7 +131,8 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
 ;; REQUESTING AND PARSING
 
 (defun wordreference--retrieve-parse-html (word &optional source target)
-  "Query wordreference.com for WORD, and parse the HTML response."
+  "Query wordreference.com for WORD, and parse the HTML response.
+Optionally specify SOURCE and TARGET languages."
   (let* ((url (concat wordreference-base-url
                       (format "/%s%s/%s"
                               (or source
@@ -151,7 +152,7 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
 
 (defun wordreference--get-word-tables (tables)
   (let ((word-tables))
-    (mapcar (lambda (x)
+    (mapc (lambda (x)
               (when (equal (dom-attr x 'class) "WRD")
                 (push x word-tables)))
             tables)
@@ -175,10 +176,10 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
   (let* ((title-tr (car trs))
          (langs-tr (cadr trs))
          (source-td (dom-by-class langs-tr "FrWrd"))
-         (source-word (dom-texts source-td))
+         ;; (source-word (dom-texts source-td))
          (source-abbrev (wordreference-extract-lang-code-from-td source-td))
          (target-td (dom-by-class langs-tr "ToWrd"))
-         (target-word (dom-texts target-td))
+         ;; (target-word (dom-texts target-td))
          (target-abbrev (wordreference-extract-lang-code-from-td target-td))
          (words-trs (cddr trs)))
     (list
@@ -192,10 +193,10 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
   (let ((tds (dom-by-tag tr 'td)))
     ;; (setq wr-single-td (caddr tds))
     (mapcar (lambda (x)
-              (wr-build-single-td-list x))
+              (wordreference-build-single-td-list x))
             tds)))
 
-(defun wr-build-single-td-list (td)
+(defun wordreference-build-single-td-list (td)
   ""
   (cond ((or (dom-by-class td "ToWrd")
              (dom-by-class td "FrWrd"))
@@ -248,6 +249,7 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
                             target
                             wordreference-target-lang)))
       ;; Debugging:
+      ;; (setq wr-html html-parsed)
       ;; (setq wr-post-article post-article)
       ;; (setq wordreference-word-tables word-tables)
       ;; (setq wr-comp-table comp-table)
@@ -321,8 +323,8 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
   ""
   (let* ((info (car trs))
          (table-name (plist-get info :title))
-         (source (plist-get info :source))
-         (target (plist-get info :target))
+         ;; (source (plist-get info :source))
+         ;; (target (plist-get info :target))
          (definitions (cadr trs)))
     (when table-name
       (wordreference-print-heading table-name))
@@ -442,7 +444,7 @@ and target term, or an example sentence."
               'help-echo (concat "Browse inflexion table for '"
                                  source-term "'"))
              " "))
-         (propertize (or source-pos
+          (propertize (or source-pos
                           "")
                       'face font-lock-comment-face)
           " "

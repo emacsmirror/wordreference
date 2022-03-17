@@ -426,9 +426,9 @@ and target term, or an example sentence."
               'button t
               'follow-link t
               'shr-url (concat wordreference-base-url source-conj)
-              'keymap leo-inflexion-table-map
+              'keymap wordreference-link-map ;leo-inflexion-table-map
               'fontified t
-              'face 'leo-auxiliary-face
+              'face '((t :inherit font-lock-comment-face))
               'mouse-face 'highlight
               'help-echo (concat "Browse inflexion table for '"
                                  source-term "'"))

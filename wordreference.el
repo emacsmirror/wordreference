@@ -145,7 +145,8 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
     (mapcar (lambda (x)
               (when (equal (dom-attr x 'class) "WRD")
                 (push x word-tables)))
-            tables)))
+            tables)
+    (reverse word-tables)))
 
 (defun wordreference--get-trs (word-table)
   (dom-children word-table))
@@ -220,12 +221,15 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
            (html-parsed (wordreference--retrieve-parse-html word source target))
            (tables (wordreference--get-tables html-parsed))
            (word-tables (wordreference--get-word-tables tables))
-           (pr-table (cadr word-tables))
+           (pr-table (car word-tables))
            (pr-trs (wordreference--get-trs pr-table))
            (pr-trs-results-list (wordreference-collect-trs-results-list pr-trs))
-           (sup-trs-table (cadddr word-tables))
-           (sup-trs (wordreference--get-trs sup-trs-table))
-           (sup-trs-results-list (wordreference-collect-trs-results-list sup-trs))
+           ;; (sup-trs-table (cdr word-tables))
+           ;; (sup-trs (wordreference--get-trs sup-trs-table))
+           ;; (sup-trs-results-list (wordreference-collect-trs-results-list sup-trs))
+           ;; (comp-table (dom-by-id word-tables "compound_forms"))
+           ;; (comp-trs (wordreference--get-trs comp-table))
+           ;; (comp-trs-results-list (wordreference-collect-trs-results-list comp-trs))
            (source-lang (plist-get (car pr-trs-results-list) :source))
            (target-lang (plist-get (car pr-trs-results-list) :target)))
       ;; Debugging:
@@ -237,10 +241,12 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
       ;; (setq wordreference-full-sup-trs-list sup-trs-results-list)
       (erase-buffer)
       (wordreference-mode)
-      (wordreference-print-trs-results pr-trs-results-list)
-      (insert "\n")
-      (when sup-trs-table
-        (wordreference-print-trs-results sup-trs-results-list))
+      ;; print principle, supplementary, and compound tables:
+      (mapcar (lambda (x)
+                (wordreference-print-trs-results
+                 (wordreference-collect-trs-results-list
+                  (wordreference--get-trs x))))
+              word-tables)
       (setq-local header-line-format
                   (propertize
                    (format "Wordreference results for \"%s\" from %s to %s:"
@@ -294,7 +300,8 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
       (wordreference-print-heading table-name))
     (if definitions
         (wordreference-print-definitions definitions)
-      (insert "looks like wordreference returned nada."))))
+      (insert "looks like wordreference returned nada."))
+    (insert "\n")))
 
 (defun wordreference-print-definitions (defs)
   ""

@@ -610,7 +610,7 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
 (defun wordreference-print-other-entries (html)
   ""
   (let* ((also-found (dom-by-id html "FTintro"))
-         (also-found-heading (dom-texts also-found))
+         (also-found-heading (string-trim (dom-texts also-found)))
          (also-lang (dom-by-class html "FTsource"))
          (also-list (dom-by-tag
                      (dom-by-class html "FTlist")

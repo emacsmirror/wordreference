@@ -238,12 +238,6 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
            (forum-links (dom-children
                          (dom-by-id post-article "lista_link")))
            (forum-links-propertized (wordreference-process-forum-links forum-links))
-           ;; (sup-trs-table (cdr word-tables))
-           ;; (sup-trs (wordreference--get-trs sup-trs-table))
-           ;; (sup-trs-results-list (wordreference-collect-trs-results-list sup-trs))
-           ;; (comp-table (dom-by-id word-tables "compound_forms"))
-           ;; (comp-trs (wordreference--get-trs comp-table))
-           ;; (comp-trs-results-list (wordreference-collect-trs-results-list comp-trs))
            (source-lang (plist-get (car pr-trs-results-list) :source))
            (target-lang (plist-get (car pr-trs-results-list) :target)))
       ;; Debugging:
@@ -257,7 +251,7 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
       ;; (setq wordreference-full-sup-trs-list sup-trs-results-list)
       (erase-buffer)
       (wordreference-mode)
-      ;; print principle, supplementary, and compound tables:
+      ;; print principle, supplementary, particule verbs, and compound tables:
       (mapcar (lambda (x)
                 (wordreference-print-trs-results
                  (wordreference-collect-trs-results-list

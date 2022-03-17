@@ -477,8 +477,7 @@ and target term, or an example sentence."
               'face '((t :inherit font-lock-comment-face))
               'mouse-face 'highlight
               'help-echo (concat "Browse inflexion table for '"
-                                 source-term "'"))
-             ))
+                                 source-term "'"))))
           " "
           (propertize (or target-pos
                           "")
@@ -639,26 +638,26 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
                   " - ")
        "\n\n"))))
 
-(defun wordreference-browse-conjugation-for-term ()
-  ""
-  (interactive)
-  (let* ((term (word-at-point)) ;FIXME: this wont work when point on a conj icon!
-         ;;FIXME: if we search in our target not source lang,
-         ;; WR still works and flips the langs, leaving our vars backwards
-         ;; can we store real langs somehow?
-         (lang (if (equal (get-text-property (point) 'type) 'source)
-                   wordreference-source-lang
-                 wordreference-target-lang))
-         (url (concat wordreference-conj-base-url
-                      lang
-                      wordreference-conj-url-query
-                      term))
-         (browse-url-browser-function (or wordreference-browse-url-function
-                                          (when (browse-url-can-use-xdg-open)
-                                            'browse-url-xdg-open)
-                                          browse-url-secondary-browser-function
-                                          browse-url-browser-function)))
-    (browse-url url)))
+;; (defun wordreference-browse-conjugation-for-term ()
+;;   ""
+;;   (interactive)
+;;   (let* ((term (word-at-point)) ;FIXME: this wont work when point on a conj icon!
+;;          ;;FIXME: if we search in our target not source lang,
+;;          ;; WR still works and flips the langs, leaving our vars backwards
+;;          ;; can we store real langs somehow?
+;;          (lang (if (equal (get-text-property (point) 'type) 'source)
+;;                    wordreference-source-lang
+;;                  wordreference-target-lang))
+;;          (url (concat wordreference-conj-base-url
+;;                       lang
+;;                       wordreference-conj-url-query
+;;                       term))
+;;          (browse-url-browser-function (or wordreference-browse-url-function
+;;                                           (when (browse-url-can-use-xdg-open)
+;;                                             'browse-url-xdg-open)
+;;                                           browse-url-secondary-browser-function
+;;                                           browse-url-browser-function)))
+;;     (browse-url url)))
 
 (define-derived-mode wordreference-mode special-mode "wordreference"
   :group 'wordreference

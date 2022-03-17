@@ -40,6 +40,7 @@
 (require 'dom)
 (require 'shr)
 (require 'browse-url)
+(require 'thingatpt)
 (require 'text-property-search)
 
 (defgroup wordreference nil

@@ -253,11 +253,9 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
       (erase-buffer)
       (wordreference-mode)
       ;; print principle, supplementary, particule verbs, and compound tables:
-      (mapcar (lambda (x)
-                (wordreference-print-trs-results
-                 (wordreference-collect-trs-results-list
-                  (wordreference--get-trs x))))
-              word-tables)
+      (if word-tables
+          (wordreference-print-tables word-tables)
+        (insert "looks like wordreference returned nada.\n\n"))
       ;;FIXME: sometimes forum heading doens't print
       (wordreference-print-heading forum-heading-string)
       (wordreference-print-forum-links forum-links-propertized)
@@ -302,6 +300,14 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
                       'heading t
                       'face '((t :inherit font-lock-function-name-face
                                  :weight bold)))))
+
+(defun wordreference-print-tables (tables)
+  ""
+  (mapcar (lambda (x)
+            (wordreference-print-trs-results
+             (wordreference-collect-trs-results-list
+              (wordreference--get-trs x))))
+          tables))
 
 (defun wordreference-print-trs-results (trs)
   ""

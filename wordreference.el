@@ -238,8 +238,12 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
            (forum-links (dom-children
                          (dom-by-id post-article "lista_link")))
            (forum-links-propertized (wordreference-process-forum-links forum-links))
-           (source-lang (plist-get (car pr-trs-results-list) :source))
-           (target-lang (plist-get (car pr-trs-results-list) :target)))
+           (source-lang (or (plist-get (car pr-trs-results-list) :source)
+                            source
+                            wordreference-source-lang))
+           (target-lang (or (plist-get (car pr-trs-results-list) :target)
+                            target
+                            wordreference-target-lang)))
       ;; Debugging:
       ;; (setq wr-post-article post-article)
       ;; (setq wordreference-word-tables word-tables)

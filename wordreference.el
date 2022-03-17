@@ -253,9 +253,10 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
       (erase-buffer)
       (wordreference-mode)
       ;; print principle, supplementary, particule verbs, and compound tables:
-      (if word-tables
-          (wordreference-print-tables word-tables)
-        (insert "looks like wordreference returned nada.\n\n"))
+      (if (not word-tables)
+          (insert "looks like wordreference returned nada.\n\nHit 'S' to search again with languages reversed.\n\n")
+        (wordreference-print-tables word-tables))
+      (wordreference-print-other-entries html-parsed)
       ;;FIXME: sometimes forum heading doens't print
       (wordreference-print-heading forum-heading-string)
       (wordreference-print-forum-links forum-links-propertized)
@@ -576,10 +577,41 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
 (defun wordreference-switch-source-target-and-search ()
   ""
   (interactive)
-  (let ((word-reference-target-lang (plist-get wordreference-results-info 'source))
-        (wordreference-source-lang (plist-get wordreference-results-info 'target))
+  (let ((target (plist-get wordreference-results-info 'source))
+        (source (plist-get wordreference-results-info 'target))
         (term (plist-get wordreference-results-info 'term)))
-    (wordreference-search term)))
+    (wordreference-search term source target)))
+
+(defun wordreference-print-other-entries (html)
+  ""
+  (let* ((also-found (dom-by-id html "FTintro"))
+         (also-found-heading (dom-texts also-found))
+         (also-lang (dom-by-class html "FTsource"))
+         (also-list (dom-by-tag
+                     (dom-by-class html "FTlist")
+                     'a)))
+    (when also-found
+      (wordreference-print-heading also-found-heading)
+      (insert
+       "\n"
+       (mapconcat (lambda (x)
+                    (let* ((link (dom-by-tag x 'a))
+                           (link-text (dom-text link))
+                           (link-suffix (dom-attr link 'href)))
+                      (propertize link-text
+                                  'button t
+                                  'follow-link t
+                                  'shr-url (concat wordreference-base-url
+                                                   link-suffix)
+                                  'keymap wordreference-result-search-map
+                                  'fontified t
+                                  'face '((t :inherit warning))
+                                  'mouse-face 'highlight
+                                  'help-echo (concat "Search for for '"
+                                                     link-text "'"))))
+                  also-list
+                  " - ")
+       "\n\n"))))
 
 (defun wordreference-browse-conjugation-for-term ()
   ""

@@ -118,6 +118,14 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
     (define-key map (kbd "RET") #'wordreference--return-search-word)
     map))
 
+
+(defvar wordreference-link-map
+  (let ((map (make-sparse-keymap)))
+    ;; (let ((map (copy-keymap shr-map)))
+    (define-key map [mouse-2] #'shr-browse-url)
+    (define-key map (kbd "RET") #'shr-browse-url)
+    map))
+
 
 ;; REQUESTING AND PARSING
 
@@ -224,6 +232,12 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
            (pr-table (car word-tables))
            (pr-trs (wordreference--get-trs pr-table))
            (pr-trs-results-list (wordreference-collect-trs-results-list pr-trs))
+           (post-article (dom-by-id html-parsed "postArticle"))
+           (forum-heading (dom-by-id post-article "threadsHeader"))
+           (forum-heading-string (dom-text forum-heading))
+           (forum-links (dom-children
+                         (dom-by-id post-article "lista_link")))
+           (forum-links-propertized (wordreference-process-forum-links forum-links))
            ;; (sup-trs-table (cdr word-tables))
            ;; (sup-trs (wordreference--get-trs sup-trs-table))
            ;; (sup-trs-results-list (wordreference-collect-trs-results-list sup-trs))
@@ -234,7 +248,9 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
            (target-lang (plist-get (car pr-trs-results-list) :target)))
       ;; Debugging:
       ;; (setq wordreference-word-tables word-tables)
+      ;; (setq wr-comp-table comp-table)
       ;; (setq wordreference-full-html html-parsed)
+      ;; (setq wr-forum-links forum-links)
       ;; (setq wordreference-full-tables word-tables)
       ;; (setq wordreference-single-tr (caddr (wordreference--get-trs pr-table)))
       ;; (setq wordreference-full-pr-trs-list pr-trs-results-list)
@@ -247,6 +263,9 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
                  (wordreference-collect-trs-results-list
                   (wordreference--get-trs x))))
               word-tables)
+      ;;FIXME: sometimes forum heading doens't print
+      (wordreference-print-heading forum-heading-string)
+      (wordreference-print-forum-links forum-links-propertized)
       (setq-local header-line-format
                   (propertize
                    (format "Wordreference results for \"%s\" from %s to %s:"
@@ -436,6 +455,32 @@ and target term, or an example sentence."
           (propertize (or target-pos
                           "")
                       'face font-lock-comment-face)))))))
+
+(defun wordreference-process-forum-links (links)
+  ""
+  (mapcar (lambda (x)
+            (when (and (not (stringp x)) ; skip " - grammaire" string for now
+                       (not (equal (dom-tag x) 'br))) ; skip empty br tags too
+            (let ((forum-text (dom-text x))
+                  (forum-href (dom-attr x 'href)))
+              (propertize forum-text
+                          'button t
+                          'follow-link t
+                          'shr-url forum-href
+                          'keymap wordreference-link-map
+                          'fontified t
+                          'face '((t :inherit warning))
+                          'mouse-face 'highlight
+                          'help-echo (concat "Browse forums for '"
+                                             forum-text "'")))))
+          links))
+
+(defun wordreference-print-forum-links (links)
+  ""
+  (mapcar (lambda (x)
+            (when x ; skip all our empties
+            (insert "\n\n" x)))
+          links))
 
 
 ;; NAVIGATION etc.

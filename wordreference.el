@@ -105,6 +105,7 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
     (define-key map (kbd "w") #'wordreference-search)
     (define-key map (kbd "b") #'wordreference-browse-url-results)
     (define-key map (kbd "c") #'wordreference-copy-search-term)
+    (define-key map (kbd "d") #'wordreference-helm-dict-search)
     (define-key map (kbd ",") #'wordreference-previous-heading)
     (define-key map (kbd ".") #'wordreference-next-heading)
     (define-key map (kbd "RET") #'wordreference--return-search-word)
@@ -658,6 +659,14 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
 ;;                                           browse-url-secondary-browser-function
 ;;                                           browse-url-browser-function)))
 ;;     (browse-url url)))
+
+
+;; NB: runs on a modified `helm-dictionary'!:
+(defun wordreference-helm-dict-search ()
+  ""
+  (interactive)
+  (let ((query (plist-get wordreference-results-info 'term)))
+    (helm-dictionary (assoc "fr-en" helm-dictionary-database) query)))
 
 (define-derived-mode wordreference-mode special-mode "wordreference"
   :group 'wordreference

@@ -231,7 +231,7 @@ Optionally specify SOURCE and TARGET languages."
         (t
          `(:other ,(dom-texts td)))))
 
-(defun wordreference-print-translation-buffer (word html-parsed)
+(defun wordreference-print-translation-buffer (word html-parsed &optional source target)
   "Print translation results in buffer."
   (with-current-buffer (get-buffer-create "*wordreference*")
     (let* ((inhibit-read-only t)
@@ -293,20 +293,24 @@ Optionally specify SOURCE and TARGET languages."
   (message "w/s: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms, c: copy search term, S: switch langs and search."))
 
 ;;;###autoload
-(defun wordreference-search (&optional source target)
-  "Search wordreference for region, word-at-point, or user input."
+(defun wordreference-search (&optional word source target)
+  "Search wordreference for region, `word-at-point', or user input.
+Optionally specify SOURCE and TARGET languages."
   (interactive)
   (let* ((region (if (equal major-mode 'pdf-view-mode)
                      (when (region-active-p)
                        (pdf-view-active-region-text))
                    (when (use-region-p)
                      (buffer-substring-no-properties (region-beginning) (region-end)))))
-         (word
-          (read-string (format "Wordreference search (%s): " (or region (current-word) ""))
-                       nil nil (or region (current-word)))))
+         (word (or word
+                   (read-string (format "Wordreference search (%s): "
+                                        (or region (current-word) ""))
+                                nil nil (or region (current-word))))))
     (wordreference-print-translation-buffer
      word
-     (wordreference--retrieve-parse-html word source target))))
+     (wordreference--retrieve-parse-html word source target)
+     source
+     target)))
 
 
 ;; PRINTING:

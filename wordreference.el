@@ -124,7 +124,6 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
     (define-key map (kbd "RET") #'wordreference--return-search-word)
     map))
 
-
 (defvar wordreference-link-map
   (let ((map (make-sparse-keymap)))
     ;; (let ((map (copy-keymap shr-map)))
@@ -305,7 +304,7 @@ Optionally specify SOURCE and TARGET languages."
               (while (search-forward-regexp (concat "\\b" x "\\b")
                                             nil 'noerror)
                 (add-text-properties (- (point) (length x)) (point)
-                                     '(face '((t :inherit success :weight bold)))))
+                                     '(face (:inherit success :weight bold))))
               (goto-char (point-min)))
             word-spl))))
 
@@ -313,8 +312,8 @@ Optionally specify SOURCE and TARGET languages."
   ""
   (insert (propertize heading
                       'heading t
-                      'face '((t :inherit font-lock-function-name-face
-                                 :weight bold)))))
+                      'face '(:inherit font-lock-function-name-face
+                                 :weight bold))))
 
 (defun wordreference-print-tables (tables)
   ""
@@ -414,7 +413,7 @@ and target term, or an example sentence."
         (insert
          (concat "\n -- "
                  (propertize eg
-                             'face '((t :height 0.8)))))
+                             'face '(:height 0.8))))
       (progn
         (insert
          (concat
@@ -431,7 +430,7 @@ and target term, or an example sentence."
                   'type 'source
                   'keymap wordreference-result-search-map
                   'help-echo "RET to search wordreference for this term"
-                  'face '((t :inherit warning)))))))
+                  'face 'warning)))))
           " "
           (when source-conj
             (concat
@@ -444,7 +443,7 @@ and target term, or an example sentence."
               'shr-url (concat wordreference-base-url source-conj)
               'keymap wordreference-link-map ;leo-inflexion-table-map
               'fontified t
-              'face '((t :inherit font-lock-comment-face))
+              'face font-lock-comment-face
               'mouse-face 'highlight
               'help-echo (concat "Browse inflexion table for '"
                                  source-term "'"))
@@ -456,7 +455,7 @@ and target term, or an example sentence."
           (when (and context-term
                      (not (string= context-term " ")))
             (propertize context-term
-                        'face '((t :inherit font-lock-comment-face :slant italic))))
+                        'face '(:inherit font-lock-comment-face :slant italic)))
           "\n           "
           (propertize "--> "
                       'face font-lock-comment-face)
@@ -466,7 +465,7 @@ and target term, or an example sentence."
                         'type 'target
                         'keymap wordreference-result-search-map
                         'help-echo "RET to search wordreference for this term"
-                        'face '((t :inherit warning))))
+                        'face 'warning))
           (when target-conj
             (concat
              " "
@@ -479,7 +478,7 @@ and target term, or an example sentence."
               'shr-url (concat wordreference-base-url target-conj)
               'keymap wordreference-link-map
               'fontified t
-              'face '((t :inherit font-lock-comment-face))
+              'face font-lock-comment-face
               'mouse-face 'highlight
               'help-echo (concat "Browse inflexion table for '"
                                  source-term "'"))))
@@ -501,7 +500,7 @@ and target term, or an example sentence."
                           'shr-url forum-href
                           'keymap wordreference-link-map
                           'fontified t
-                          'face '((t :inherit warning))
+                          'face 'warning
                           'mouse-face 'highlight
                           'help-echo (concat "Browse forums for '"
                                              forum-text "'")))))
@@ -616,7 +615,7 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
   ""
   (let* ((also-found (dom-by-id html "FTintro"))
          (also-found-heading (string-trim (dom-texts also-found)))
-         (also-lang (dom-by-class html "FTsource"))
+         ;; (also-langs (dom-by-class html "FTsource"))
          (also-list (dom-by-tag
                      (dom-by-class html "FTlist")
                      'a)))
@@ -635,7 +634,7 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
                                                    link-suffix)
                                   'keymap wordreference-result-search-map
                                   'fontified t
-                                  'face '((t :inherit warning))
+                                  'face 'warning
                                   'mouse-face 'highlight
                                   'help-echo (concat "Search for for '"
                                                      link-text "'"))))

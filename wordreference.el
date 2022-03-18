@@ -43,6 +43,9 @@
 (require 'thingatpt)
 (require 'text-property-search)
 
+(when (require 'pdf-tools nil :no-error)
+  (declare-function pdf-view-active-region-text "pdf-view"))
+
 (when (require 'helm-dictionary nil :noerror)
   (declare-function helm-dictionary "helm-dictionary")
   (defvar helm-dictionary-database))

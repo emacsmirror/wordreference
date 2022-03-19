@@ -520,14 +520,20 @@ and target term, or an example sentence."
     (when also-found
       (wordreference-print-heading also-found-heading)
       (insert
-       "\n"
-       also-found-source
-       "\n"
-       (wordreference-insert-also-found-list also-list-source)
-       "\n"
-       also-found-target
-       "\n"
-       (wordreference-insert-also-found-list also-list-target)
+       (if (not also-list-source)
+           ""
+         (concat "\n"
+                 also-found-source
+                 "\n"
+                 (wordreference-insert-also-found-list
+                  also-list-source)))
+       (if (not also-list-target)
+           ""
+         (concat "\n"
+                 also-found-target
+                 "\n"
+                 (wordreference-insert-also-found-list
+                  also-list-target)))
        "\n\n"))))
 
 (defun wordreference-insert-also-found-list (list)

@@ -89,10 +89,10 @@
           (alist         :tag "Regexp/function association list"
                          :key-type regexp :value-type function)))
 
-(defvar wordreference-source-lang "fr"
+(defcustom wordreference-source-lang "fr"
   "Default source language.")
 
-(defvar wordreference-target-lang "en"
+(defcustom wordreference-target-lang "en"
   "Default target language.")
 
 (defvar wordreference-base-url

@@ -171,8 +171,8 @@ Optionally specify SOURCE and TARGET languages."
                          "contenttable"))
          (entries-tr-ul (dom-by-id (car entries-table) "left"))
          (entries-tr-ul-li-ul (dom-by-tag (car entries-tr-ul) 'ul))
-         (entries-heading (dom-text
-                           (car entries-tr-ul-li-ul)))
+         ;; (entries-heading (dom-text
+                           ;; (car entries-tr-ul-li-ul)))
          (entries-rest (cdr entries-tr-ul-li-ul))
          (entries-link-list (dom-by-tag (cdr entries-rest) 'a)))
     (mapcar (lambda (x)
@@ -589,7 +589,7 @@ and target term, or an example sentence."
           links))
 
 
-;; NAVIGATION etc.
+;; BUFFER, NAVIGATION etc.
 
 (defun wordreference-next-heading ()
   "Move point to next heading."
@@ -635,7 +635,7 @@ and target term, or an example sentence."
   (plist-get wordreference-results-info item))
 
 (defun wordreference--return-search-word ()
-  "Translate word or phrase at point.
+  "Translate result word or phrase at point.
 Word or phrase at point is determined by button text property."
   ;;TODO: make this work with word at point
   (interactive)
@@ -705,7 +705,7 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
 ;;;###autoload
 (defun wordreference-search (&optional word source target)
   "Search wordreference for region, `word-at-point', or user input.
-Optionally specify SOURCE and TARGET languages."
+Optionally specify WORD, SOURCE and TARGET languages."
   (interactive)
   (let* ((region (if (equal major-mode 'pdf-view-mode)
                      (when (region-active-p)

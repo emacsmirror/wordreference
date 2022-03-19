@@ -90,10 +90,14 @@
                          :key-type regexp :value-type function)))
 
 (defcustom wordreference-source-lang "fr"
-  "Default source language.")
+  "Default source language."
+  :group 'wordreference
+  :type 'string)
 
 (defcustom wordreference-target-lang "en"
-  "Default target language.")
+  "Default target language."
+  :group 'wordreference
+  :type 'string)
 
 (defvar wordreference-base-url
   "https://www.wordreference.com"

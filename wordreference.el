@@ -285,7 +285,7 @@ Optionally specify SOURCE and TARGET languages."
       (if (not word-tables)
           (insert "looks like wordreference returned nada.\n\nHit 'S' to search again with languages reversed.\n\n")
         (wordreference-print-tables word-tables))
-      (wordreference-print-other-entries html-parsed)
+      (wordreference-print-also-found-entries html-parsed)
       ;;FIXME: sometimes forum heading doens't print
       (wordreference-print-heading forum-heading-string)
       (wordreference-print-forum-links forum-links-propertized)
@@ -525,36 +525,50 @@ and target term, or an example sentence."
                           "")
                       'face font-lock-comment-face)))))))
 
-(defun wordreference-print-other-entries (html)
+(defun wordreference-print-also-found-entries (html)
   ""
   (let* ((also-found (dom-by-id html "FTintro"))
          (also-found-heading (string-trim (dom-texts also-found)))
-         ;; (also-langs (dom-by-class html "FTsource"))
-         (also-list (dom-by-tag
-                     (dom-by-class html "FTlist")
-                     'a)))
+         (also-found-langs (dom-by-class html "FTsource"))
+         (also-found-source (string-trim
+                             (dom-texts (car also-found-langs))))
+         (also-found-target (string-trim
+                             (dom-texts (cdr also-found-langs))))
+         (also-list (dom-by-class html "FTlist"))
+         (also-list-source (dom-by-tag (car also-list) 'a))
+         (also-list-target (dom-by-tag (cdr also-list) 'a)))
     (when also-found
       (wordreference-print-heading also-found-heading)
       (insert
        "\n"
-       (mapconcat (lambda (x)
-                    (let* ((link (dom-by-tag x 'a))
-                           (link-text (dom-text link))
-                           (link-suffix (dom-attr link 'href)))
-                      (propertize link-text
-                                  'button t
-                                  'follow-link t
-                                  'shr-url (concat wordreference-base-url
-                                                   link-suffix)
-                                  'keymap wordreference-result-search-map
-                                  'fontified t
-                                  'face 'warning
-                                  'mouse-face 'highlight
-                                  'help-echo (concat "Search for '"
-                                                     link-text "'"))))
-                  also-list
-                  " - ")
+       also-found-source
+       "\n"
+       (wordreference-insert-also-found-list also-list-source)
+       "\n"
+       also-found-target
+       "\n"
+       (wordreference-insert-also-found-list also-list-target)
        "\n\n"))))
+
+(defun wordreference-insert-also-found-list (list)
+  ""
+  (mapconcat (lambda (x)
+               (let* ((link (dom-by-tag x 'a))
+                      (link-text (dom-text link))
+                      (link-suffix (dom-attr link 'href)))
+                 (propertize link-text
+                             'button t
+                             'follow-link t
+                             'shr-url (concat wordreference-base-url
+                                              link-suffix)
+                             'keymap wordreference-result-search-map
+                             'fontified t
+                             'face 'warning
+                             'mouse-face 'highlight
+                             'help-echo (concat "Search for '"
+                                                link-text "'"))))
+             list
+             " - "))
 
 (defun wordreference-process-forum-links (links)
   ""

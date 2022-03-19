@@ -311,7 +311,7 @@ Optionally specify SOURCE and TARGET languages."
   ;; handle searching again from wr:
   (when (not (equal (buffer-name (current-buffer)) "*wordreference*"))
     (switch-to-buffer-other-window (get-buffer "*wordreference*")))
-  (message "w/s: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms, c: copy search term, S: switch langs and search."))
+  (message "w/s: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms, c: copy search term, n: browse nearby entries, S: switch langs and search."))
 
 (defun wordreference-prop-query-in-results (word)
   "Propertize query WORD in results buffer."

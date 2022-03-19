@@ -247,6 +247,9 @@ Optionally specify SOURCE and TARGET languages."
         (t
          `(:other ,(dom-texts td)))))
 
+
+;; PRINTING:
+
 (defun wordreference-print-translation-buffer (word html-parsed &optional source target)
   "Print translation results in buffer."
   (with-current-buffer (get-buffer-create "*wordreference*")
@@ -309,29 +312,6 @@ Optionally specify SOURCE and TARGET languages."
   (when (not (equal (buffer-name (current-buffer)) "*wordreference*"))
     (switch-to-buffer-other-window (get-buffer "*wordreference*")))
   (message "w/s: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms, c: copy search term, S: switch langs and search."))
-
-;;;###autoload
-(defun wordreference-search (&optional word source target)
-  "Search wordreference for region, `word-at-point', or user input.
-Optionally specify SOURCE and TARGET languages."
-  (interactive)
-  (let* ((region (if (equal major-mode 'pdf-view-mode)
-                     (when (region-active-p)
-                       (pdf-view-active-region-text))
-                   (when (use-region-p)
-                     (buffer-substring-no-properties (region-beginning) (region-end)))))
-         (word (or word
-                   (read-string (format "Wordreference search (%s): "
-                                        (or region (current-word) ""))
-                                nil nil (or region (current-word))))))
-    (wordreference-print-translation-buffer
-     word
-     (wordreference--retrieve-parse-html word source target)
-     source
-     target)))
-
-
-;; PRINTING:
 
 (defun wordreference-prop-query-in-results (word)
   "Propertize query WORD in results buffer."
@@ -708,6 +688,27 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
   (interactive)
   (let ((query (plist-get wordreference-results-info 'term)))
     (helm-dictionary (assoc "fr-en" helm-dictionary-database) query)))
+
+
+;;;###autoload
+(defun wordreference-search (&optional word source target)
+  "Search wordreference for region, `word-at-point', or user input.
+Optionally specify SOURCE and TARGET languages."
+  (interactive)
+  (let* ((region (if (equal major-mode 'pdf-view-mode)
+                     (when (region-active-p)
+                       (pdf-view-active-region-text))
+                   (when (use-region-p)
+                     (buffer-substring-no-properties (region-beginning) (region-end)))))
+         (word (or word
+                   (read-string (format "Wordreference search (%s): "
+                                        (or region (current-word) ""))
+                                nil nil (or region (current-word))))))
+    (wordreference-print-translation-buffer
+     word
+     (wordreference--retrieve-parse-html word source target)
+     source
+     target)))
 
 (define-derived-mode wordreference-mode special-mode "wordreference"
   :group 'wordreference

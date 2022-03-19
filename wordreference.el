@@ -180,6 +180,7 @@ Optionally specify SOURCE and TARGET languages."
             entries-link-list)))
 
 (defun wordreference--get-word-tables (tables)
+  "Get all word tables from list of TABLES."
   (let ((word-tables))
     (mapc (lambda (x)
               (when (equal (dom-attr x 'class) "WRD")
@@ -188,10 +189,11 @@ Optionally specify SOURCE and TARGET languages."
     (reverse word-tables)))
 
 (defun wordreference--get-trs (word-table)
+  "Get all table rows from a WORD-TABLE."
   (dom-children word-table))
 
 (defun wordreference-extract-lang-code-from-td (td)
-  ""
+  "Extract a two letter language code from TD."
   ;; format is "sLang_en", but is it always?
   (when td
   (substring-no-properties
@@ -201,7 +203,11 @@ Optionally specify SOURCE and TARGET languages."
    -2))) ;last two chars
 
 (defun wordreference-collect-trs-results-list (trs)
-  ""
+  "Process the results found in TRS.
+\nReturns a nested list first containing information about the
+heading title, followed by source and target languages. This is
+followed by a list of textual results returned by
+`wordreference--build-tds-text-list'."
   (let* ((title-tr (car trs))
          (langs-tr (cadr trs))
          (source-td (dom-by-class langs-tr "FrWrd"))
@@ -226,7 +232,10 @@ Optionally specify SOURCE and TARGET languages."
             tds)))
 
 (defun wordreference-build-single-td-list (td)
-  ""
+  "Return textual result for a single TD.
+\nReturns a property list containing to or from term, position of
+speech, tooltip info, and conjunction table for a result, an
+example for an example, and other for everything else."
   (cond ((or (dom-by-class td "ToWrd")
              (dom-by-class td "FrWrd"))
          (let* ((to-or-from (if (dom-by-class td "ToWrd")
@@ -257,7 +266,9 @@ Optionally specify SOURCE and TARGET languages."
 ;; PRINTING:
 
 (defun wordreference-print-translation-buffer (word html-parsed &optional source target)
-  "Print translation results in buffer."
+  "Print translation results in buffer.
+WORD is the search query, HTML-PARSED is what our query returned.
+SOURCE and TARGET are languages."
   (with-current-buffer (get-buffer-create "*wordreference*")
     (let* ((inhibit-read-only t)
            (tables (wordreference--get-tables html-parsed))
@@ -333,14 +344,14 @@ Optionally specify SOURCE and TARGET languages."
             word-spl))))
 
 (defun wordreference-print-heading (heading)
-  ""
+  "Insert a single propertized HEADING."
   (insert (propertize heading
                       'heading t
                       'face '(:inherit font-lock-function-name-face
                                  :weight bold))))
 
 (defun wordreference-print-tables (tables)
-  ""
+  "Print a list of TABLES."
   (mapcar (lambda (x)
             (wordreference-print-trs-results
              (wordreference-collect-trs-results-list
@@ -348,7 +359,8 @@ Optionally specify SOURCE and TARGET languages."
           tables))
 
 (defun wordreference-print-trs-results (trs)
-  ""
+  "Print a section heading followed by its definitions.
+TRS is the list of table rows from the parsed HTML."
   (let* ((info (car trs))
          (table-name (plist-get info :title))
          ;; (source (plist-get info :source))
@@ -362,7 +374,7 @@ Optionally specify SOURCE and TARGET languages."
     (insert "\n")))
 
 (defun wordreference-print-definitions (defs)
-  ""
+  "Print a list of definitions DEFS."
   (mapc (lambda (def)
             (wordreference-print-single-definition def))
           defs)
@@ -512,7 +524,8 @@ and target term, or an example sentence."
                       'face font-lock-comment-face)))))))
 
 (defun wordreference-print-also-found-entries (html)
-  ""
+  "Insert a propertized list of 'also found in' entries.
+HTML is what our original query returned."
   (let* ((also-found (dom-by-id html "FTintro"))
          (also-found-heading (string-trim (dom-texts also-found)))
          (also-found-langs (dom-by-class html "FTsource"))
@@ -543,7 +556,7 @@ and target term, or an example sentence."
        "\n\n"))))
 
 (defun wordreference-insert-also-found-list (list)
-  ""
+  "Propertize a LIST of 'also found in' entries."
   (mapconcat (lambda (x)
                (let* ((link (dom-by-tag x 'a))
                       (link-text (dom-text link))
@@ -563,7 +576,7 @@ and target term, or an example sentence."
              " - "))
 
 (defun wordreference-process-forum-links (links)
-  ""
+  "Propertize LINKS to forum entries for inserting."
   (mapcar (lambda (x)
             (when (and (not (stringp x)) ; skip " - grammaire" string for now
                        (not (equal (dom-tag x) 'br))) ; skip empty br tags too
@@ -582,7 +595,7 @@ and target term, or an example sentence."
           links))
 
 (defun wordreference-print-forum-links (links)
-  ""
+  "Print a list of LINKS to forum entries."
   (mapcar (lambda (x)
             (when x ; skip all our empties
             (insert "\n\n" x)))
@@ -631,13 +644,12 @@ and target term, or an example sentence."
            (goto-char (next-single-property-change (point) 'button))))))))
 
 (defun wordreference-get-results-info-item (item)
-  ""
+  "Get ITEM from `wordreference-results-info'."
   (plist-get wordreference-results-info item))
 
 (defun wordreference--return-search-word ()
   "Translate result word or phrase at point.
 Word or phrase at point is determined by button text property."
-  ;;TODO: make this work with word at point
   (interactive)
   (let* ((text (buffer-substring-no-properties
                 (progn
@@ -679,7 +691,7 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
     (message (concat "\"" term "\" copied to clipboard."))))
 
 (defun wordreference-switch-source-target-and-search ()
-  ""
+  "Search for same term with source and target reversed."
   (interactive)
   (let ((target (plist-get wordreference-results-info 'source))
         (source (plist-get wordreference-results-info 'target))
@@ -687,6 +699,7 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
     (wordreference-search term source target)))
 
 (defun wordreference-nearby-entries-search ()
+  "Select an item from nearby dictionary items and search for it."
   (interactive)
   (let ((word (completing-read "View nearby entry: "
                                wordreference-nearby-entries
@@ -696,7 +709,7 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
 
 ;; NB: runs on a modified `helm-dictionary'!:
 (defun wordreference-helm-dict-search ()
-  ""
+  "Search for term in a French `helm-dictionary'."
   (interactive)
   (let ((query (plist-get wordreference-results-info 'term)))
     (helm-dictionary (assoc "fr-en" helm-dictionary-database) query)))

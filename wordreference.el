@@ -119,13 +119,12 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
     (define-key map (kbd "b") #'wordreference-browse-url-results)
     (define-key map (kbd "C") #'wordreference-copy-search-term)
     (define-key map (kbd "d") #'wordreference-helm-dict-search)
-    (define-key map (kbd "c") #'wordreference-browse-term-ctnrl)
+    (define-key map (kbd "c") #'wordreference-browse-term-cntrl)
     (define-key map (kbd "n") #'wordreference-nearby-entries-search)
     (define-key map (kbd ",") #'wordreference-previous-heading)
     (define-key map (kbd ".") #'wordreference-next-heading)
     (define-key map (kbd "RET") #'wordreference--return-search-word)
     (define-key map (kbd "S") #'wordreference-switch-source-target-and-search)
-    ;; (define-key map (kbd "f") #'wordreference-jump-to-forum-results)
     map)
   "Keymap for wordreference mode.")
 
@@ -318,7 +317,7 @@ Optionally specify SOURCE and TARGET languages."
   ;; handle searching again from wr:
   (when (not (equal (buffer-name (current-buffer)) "*wordreference*"))
     (switch-to-buffer-other-window (get-buffer "*wordreference*")))
-  (message "w/s: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms, c: copy search term, n: browse nearby entries, S: switch langs and search."))
+  (message "w/s: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms, C: copy search term, n: browse nearby entries, S: switch langs and search, c: browse on www.cntrl.fr."))
 
 (defun wordreference-prop-query-in-results (word)
   "Propertize query WORD in results buffer."
@@ -702,8 +701,8 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
   (let ((query (plist-get wordreference-results-info 'term)))
     (helm-dictionary (assoc "fr-en" helm-dictionary-database) query)))
 
-(defun wordreference-browse-term-ctnrl ()
-  ""
+(defun wordreference-browse-term-cntrl ()
+  "Search for the same term on https://www.cntrl.fr."
   ;;TODO: handle multi-term queries better
   (interactive)
   (let ((query (plist-get wordreference-results-info 'term)))

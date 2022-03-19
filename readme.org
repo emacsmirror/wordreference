@@ -16,6 +16,7 @@ In the results buffer:
 - [ =C-= ] =<return>= to open a conjugation table or forum entry [in external browser]
 - =,= and =.= to go to the previous/next heading
 - =b= to view page in external browser
-- =c= to copy current search term
+- =C= to copy current search term
 - =n= to list and search nearby entries
+- =c= to search same term on https://www.cntrl.fr
 - =S= to swap source and target and search for same term again

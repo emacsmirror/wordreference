@@ -117,8 +117,9 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
     (define-key map (kbd "s") #'wordreference-search)
     (define-key map (kbd "w") #'wordreference-search)
     (define-key map (kbd "b") #'wordreference-browse-url-results)
-    (define-key map (kbd "c") #'wordreference-copy-search-term)
+    (define-key map (kbd "C") #'wordreference-copy-search-term)
     (define-key map (kbd "d") #'wordreference-helm-dict-search)
+    (define-key map (kbd "c") #'wordreference-browse-term-ctnrl)
     (define-key map (kbd "n") #'wordreference-nearby-entries-search)
     (define-key map (kbd ",") #'wordreference-previous-heading)
     (define-key map (kbd ".") #'wordreference-next-heading)
@@ -700,6 +701,14 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
   (interactive)
   (let ((query (plist-get wordreference-results-info 'term)))
     (helm-dictionary (assoc "fr-en" helm-dictionary-database) query)))
+
+(defun wordreference-browse-term-ctnrl ()
+  ""
+  ;;TODO: handle multi-term queries better
+  (interactive)
+  (let ((query (plist-get wordreference-results-info 'term)))
+    (browse-url-generic (concat "https://www.cnrtl.fr/definition/"
+                                query))))
 
 
 ;;;###autoload

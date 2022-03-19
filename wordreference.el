@@ -108,6 +108,8 @@
 Used to store search term for `wordreference-leo-browse-url-results'.")
 (make-variable-buffer-local 'wordreference-results-info)
 
+(defvar-local wordreference-nearby-entries nil)
+
 (defvar wordreference-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "TAB") #'forward-button)

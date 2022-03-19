@@ -113,6 +113,7 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
     (define-key map (kbd "b") #'wordreference-browse-url-results)
     (define-key map (kbd "c") #'wordreference-copy-search-term)
     (define-key map (kbd "d") #'wordreference-helm-dict-search)
+    (define-key map (kbd "n") #'wordreference-nearby-entries-search)
     (define-key map (kbd ",") #'wordreference-previous-heading)
     (define-key map (kbd ".") #'wordreference-next-heading)
     (define-key map (kbd "RET") #'wordreference--return-search-word)
@@ -156,6 +157,21 @@ Optionally specify SOURCE and TARGET languages."
 (defun wordreference--get-tables (dom)
   "Get tables from parsed HTML response DOM."
   (dom-by-tag dom 'table))
+
+(defun wordreference--get-nearby-entries (dom)
+  "Fetch list of nearby entries from HTML response DOM."
+  (let* ((entries-table (dom-by-id
+                         (wordreference--get-tables dom)
+                         "contenttable"))
+         (entries-tr-ul (dom-by-id (car entries-table) "left"))
+         (entries-tr-ul-li-ul (dom-by-tag (car entries-tr-ul) 'ul))
+         (entries-heading (dom-text
+                           (car entries-tr-ul-li-ul)))
+         (entries-rest (cdr entries-tr-ul-li-ul))
+         (entries-link-list (dom-by-tag (cdr entries-rest) 'a)))
+    (mapcar (lambda (x)
+              (dom-texts x))
+            entries-link-list)))
 
 (defun wordreference--get-word-tables (tables)
   (let ((word-tables))
@@ -284,6 +300,8 @@ Optionally specify SOURCE and TARGET languages."
                   `(term ,word
                          source ,source-lang
                          target ,target-lang))
+      (setq-local wordreference-nearby-entries
+                  (wordreference--get-nearby-entries html-parsed))
       (wordreference--make-buttons)
       (wordreference-prop-query-in-results word)
       (goto-char (point-min))))
@@ -507,6 +525,37 @@ and target term, or an example sentence."
                           "")
                       'face font-lock-comment-face)))))))
 
+(defun wordreference-print-other-entries (html)
+  ""
+  (let* ((also-found (dom-by-id html "FTintro"))
+         (also-found-heading (string-trim (dom-texts also-found)))
+         ;; (also-langs (dom-by-class html "FTsource"))
+         (also-list (dom-by-tag
+                     (dom-by-class html "FTlist")
+                     'a)))
+    (when also-found
+      (wordreference-print-heading also-found-heading)
+      (insert
+       "\n"
+       (mapconcat (lambda (x)
+                    (let* ((link (dom-by-tag x 'a))
+                           (link-text (dom-text link))
+                           (link-suffix (dom-attr link 'href)))
+                      (propertize link-text
+                                  'button t
+                                  'follow-link t
+                                  'shr-url (concat wordreference-base-url
+                                                   link-suffix)
+                                  'keymap wordreference-result-search-map
+                                  'fontified t
+                                  'face 'warning
+                                  'mouse-face 'highlight
+                                  'help-echo (concat "Search for '"
+                                                     link-text "'"))))
+                  also-list
+                  " - ")
+       "\n\n"))))
+
 (defun wordreference-process-forum-links (links)
   ""
   (mapcar (lambda (x)
@@ -631,36 +680,13 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
         (term (plist-get wordreference-results-info 'term)))
     (wordreference-search term source target)))
 
-(defun wordreference-print-other-entries (html)
-  ""
-  (let* ((also-found (dom-by-id html "FTintro"))
-         (also-found-heading (string-trim (dom-texts also-found)))
-         ;; (also-langs (dom-by-class html "FTsource"))
-         (also-list (dom-by-tag
-                     (dom-by-class html "FTlist")
-                     'a)))
-    (when also-found
-      (wordreference-print-heading also-found-heading)
-      (insert
-       "\n"
-       (mapconcat (lambda (x)
-                    (let* ((link (dom-by-tag x 'a))
-                           (link-text (dom-text link))
-                           (link-suffix (dom-attr link 'href)))
-                      (propertize link-text
-                                  'button t
-                                  'follow-link t
-                                  'shr-url (concat wordreference-base-url
-                                                   link-suffix)
-                                  'keymap wordreference-result-search-map
-                                  'fontified t
-                                  'face 'warning
-                                  'mouse-face 'highlight
-                                  'help-echo (concat "Search for for '"
-                                                     link-text "'"))))
-                  also-list
-                  " - ")
-       "\n\n"))))
+(defun wordreference-nearby-entries-search ()
+  (interactive)
+  (let ((word (completing-read "View nearby entry: "
+                               wordreference-nearby-entries
+                               nil
+                               nil)))
+    (wordreference-search word)))
 
 ;; NB: runs on a modified `helm-dictionary'!:
 (defun wordreference-helm-dict-search ()

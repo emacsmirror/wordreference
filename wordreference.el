@@ -706,7 +706,9 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
   "Search for term in `helm-dictionary'.
 \nUses the dictionary specified in `wordreference-helm-dictionary-name'."
   (interactive)
-  (let ((query (plist-get wordreference-results-info 'term)))
+  (let ((query (concat "\\b"
+                       (plist-get wordreference-results-info 'term)
+                       "\\b")))
     (helm-dictionary wordreference-helm-dictionary-name query t)))
 
 (defun wordreference-browse-term-cntrl ()

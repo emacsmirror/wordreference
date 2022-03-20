@@ -1,14 +1,12 @@
 ;;; wordreference.el --- Interface for wordreference.com -*- lexical-binding:t -*-
 ;;
-;; Copyright (C) 2022 Marty Hiatt <martianhiatus AT riseup.net>
-;;
 ;; Author: Marty Hiatt <martianhiatus AT riseup.net>
-;; Created: 21 Oct 2020
+;; Copyright (C) 2022 Marty Hiatt <martianhiatus AT riseup.net>
 ;;
 ;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: convenience, translate
 ;; URL: https://codeberg.org/martianh/wordreference
-;; Version: 0.1
+;; Version: 0.2
 ;; Prefix: wordreference
 ;; Separator: -
 

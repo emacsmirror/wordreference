@@ -450,78 +450,72 @@ and target term, or an example sentence."
          (concat "\n -- "
                  (propertize eg
                              'face '(:height 0.8))))
-      (progn
-        (insert
-         (concat
-          (when source-term
-            (if (string= source-term " ")
-                (propertize "\n\""
-                            'face font-lock-comment-face)
-              (progn
-                (concat
-                 "\n\n"
-                 (propertize
-                  source-term
-                  'button t
-                  'type 'source
-                  'keymap wordreference-result-search-map
-                  'help-echo "RET to search wordreference for this term"
-                  'face 'warning)))))
-          " "
-          (when source-conj
+      (insert
+       (concat
+        (when source-term
+          (if (string= source-term " ")
+              (propertize "\n\"\"" ;; for repeat terms
+                          'face font-lock-comment-face)
             (concat
-             (propertize
-              (if (fontp (char-displayable-p #10r9638))
-                  "▦"
-                "#")
-              'button t
-              'follow-link t
-              'shr-url (concat wordreference-base-url source-conj)
-              'keymap wordreference-link-map ;leo-inflexion-table-map
-              'fontified t
-              'face font-lock-comment-face
-              'mouse-face 'highlight
-              'help-echo (concat "Browse inflexion table for '"
-                                 source-term "'"))
-             " "))
-          (propertize (or source-pos
-                          "")
-                      'face font-lock-comment-face)
-          " "
-          (when (and context-term
-                     (not (string= context-term " ")))
-            (propertize context-term
-                        'face '(:inherit font-lock-comment-face :slant italic)))
-          "\n           "
-          (propertize "--> "
-                      'face font-lock-comment-face)
-          (when target-term
-            (propertize target-term
-                        'button t
-                        'type 'target
-                        'keymap wordreference-result-search-map
-                        'help-echo "RET to search wordreference for this term"
-                        'face 'warning))
-          (when target-conj
-            (concat
-             " "
-             (propertize
-              (if (fontp (char-displayable-p #10r9638))
-                  "▦"
-                "#")
-              'button t
-              'follow-link t
-              'shr-url (concat wordreference-base-url target-conj)
-              'keymap wordreference-link-map
-              'fontified t
-              'face font-lock-comment-face
-              'mouse-face 'highlight
-              'help-echo (concat "Browse inflexion table for '"
-                                 source-term "'"))))
-          " "
-          (propertize (or target-pos
-                          "")
-                      'face font-lock-comment-face)))))))
+             "\n\n"
+             (wordreference-propertize-result-term source-term))))
+        " "
+        (when source-conj
+          (concat
+           (wordreference--propertize-conjunction-link source-term source-conj)
+           " "))
+        (propertize (or source-pos
+                        "")
+                    'face font-lock-comment-face)
+        " "
+        (when (and context-term
+                   (not (string= context-term " ")))
+          (propertize context-term
+                      'face '(:inherit font-lock-comment-face :slant italic)))
+        "\n           "
+        (propertize "--> "
+                    'face font-lock-comment-face)
+        (when target-term
+          (propertize target-term
+                      'button t
+                      'type 'target
+                      'keymap wordreference-result-search-map
+                      'help-echo "RET to search wordreference for this term"
+                      'face 'warning))
+        (when target-conj
+          (concat
+           " "
+           (wordreference--propertize-conjunction-link target-term target-conj)))
+        " "
+        (propertize (or target-pos
+                        "")
+                    'face font-lock-comment-face))))))
+
+(defun wordreference-propertize-result-term (term)
+  "Propertize result TERM in results buffer."
+  (propertize
+   term
+   'button t
+   'type 'source
+   'keymap wordreference-result-search-map
+   'help-echo "RET to search wordreference for this term"
+   'face 'warning))
+
+(defun wordreference--propertize-conjunction-link (term conj)
+  "Propertize the icon link to conjunction table CONJ for TERM."
+  (propertize
+   (if (fontp (char-displayable-p #10r9638))
+       "▦"
+     "#")
+   'button t
+   'follow-link t
+   'shr-url (concat wordreference-base-url conj)
+   'keymap wordreference-link-map
+   'fontified t
+   'face font-lock-comment-face
+   'mouse-face 'highlight
+   'help-echo (concat "Browse inflexion table for '"
+                      term "'")))
 
 (defun wordreference-print-also-found-entries (html)
   "Insert a propertized list of 'also found in' entries.

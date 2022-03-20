@@ -136,7 +136,6 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
 
 (defvar wordreference-link-map
   (let ((map (make-sparse-keymap)))
-    ;; (let ((map (copy-keymap shr-map)))
     (define-key map [mouse-2] #'shr-browse-url)
     (define-key map (kbd "RET") #'shr-browse-url)
     map))
@@ -226,7 +225,6 @@ followed by a list of textual results returned by
 (defun wordreference--build-tds-text-list (tr)
   "Return a list of results of both source and target langs from TR."
   (let ((tds (dom-by-tag tr 'td)))
-    ;; (setq wr-single-td (caddr tds))
     (mapcar (lambda (x)
               (wordreference-build-single-td-list x))
             tds)))
@@ -305,8 +303,9 @@ SOURCE and TARGET are languages."
       (if (not word-tables)
           (insert "looks like wordreference returned nada.\n\nHit 'S' to search again with languages reversed.\n\n")
         (wordreference-print-tables word-tables))
+      ;; print list of term aslso found in these entries
       (wordreference-print-also-found-entries html-parsed)
-      ;;FIXME: sometimes forum heading doens't print
+      ;; print forums
       (wordreference-print-heading forum-heading-string)
       (wordreference-print-forum-links forum-links-propertized)
       (setq-local header-line-format
@@ -363,8 +362,6 @@ SOURCE and TARGET are languages."
 TRS is the list of table rows from the parsed HTML."
   (let* ((info (car trs))
          (table-name (plist-get info :title))
-         ;; (source (plist-get info :source))
-         ;; (target (plist-get info :target))
          (definitions (cadr trs)))
     (when table-name
       (wordreference-print-heading table-name))

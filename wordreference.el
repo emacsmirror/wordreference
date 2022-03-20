@@ -667,14 +667,18 @@ Word or phrase at point is determined by button text property."
   (interactive)
   ;;TODO: remove all [sb] etc from result phrases
   ;; "assign [sth] to [sb]" should search "assign to"
-  (let* ((result-entry (buffer-substring-no-properties
-                (progn
-                  (if (looking-back "[ \t\n]" nil) ; enter range if we tabbed here
-                      (forward-char))
-                  (previous-single-property-change (point) 'button)) ; range start
-                (next-single-property-change (point) 'button)))
+  (let* ((result-entry
+          (wordreference-cull-brackets-from-entry
+           (buffer-substring-no-properties
+                 (progn
+                   (if (looking-back "[ \t\n]" nil) ; enter range if we tabbed here
+                       (forward-char))
+                   (previous-single-property-change (point) 'button)) ; range start
+                 (next-single-property-change (point) 'button))))
          ;; handle calling this on a multi-term result:
-         (text (let ((results (split-string result-entry "[,;] ")))
+         (text (let ((results
+                       (wordreference-cull-brackets-from-entry-list
+                        (split-string result-entry "[,;] "))))
                  (if (< 1 (length results))
                      (completing-read "Select or enter search term: " results nil nil)
                    result-entry)))
@@ -686,6 +690,23 @@ Word or phrase at point is determined by button text property."
                          (wordreference-get-results-info-item 'target)
                        (wordreference-get-results-info-item 'source))))
     (wordreference-search text text-lang other-lang)))
+
+(defun wordreference-cull-brackets-from-entry-list (entries)
+  "Cull any [bracketed] parts of a results in ENTRIES."
+  (mapcar (lambda (entry)
+            (wordreference-cull-brackets-from-entry entry))
+          entries))
+
+(defun wordreference-cull-brackets-from-entry (entry)
+  "Cull any [bracketed] parts of a result ENTRY.
+Used by `wordreference--return-search-word'."
+  (save-match-data
+    (while (string-match " \\[.*?\\]" ; SPC + [anything], lazy match
+                         entry )
+      (setq entry (replace-match
+                   ""
+                   t nil entry))))
+  entry)
 
 (defun wordreference-browse-url-results ()
   "Open the current results in external browser.

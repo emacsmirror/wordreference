@@ -260,6 +260,9 @@ example for an example, and other for everything else."
         ((or (dom-by-class td "ToEx")
              (dom-by-class td "FrEx"))
          `(:example ,(dom-texts td)))
+        ((or (dom-by-class td "notePubl")
+             (string-prefix-p "Note :" (dom-texts td)))
+         `(:note ,(dom-texts td)))
         (t
          `(:other ,(dom-texts td)))))
 
@@ -444,16 +447,22 @@ and target term, or an example sentence."
                          (plist-get target :to)))))
          (target-pos (plist-get target :pos))
          (target-conj (plist-get target :conj))
-         (eg (cond ((string= (plist-get source :other) " ")
-                    (plist-get context :example))
-                   ;; process "Note" as eg, not as source-term:
-                   ((string-prefix-p "Note :" (plist-get source :other))
-                    (plist-get source :other)))))
-    (if eg
-        (insert
-         (concat "\n -- "
-                 (propertize eg
-                             'face '(:height 0.8))))
+         (eg (when (string= (plist-get source :other) " ")
+               (plist-get context :example)))
+         (note (plist-get source :note)))
+
+    (cond
+     (eg
+      (insert
+       (concat "\n -- "
+               (propertize eg
+                           'face '(:height 0.8)))))
+     (note
+      (insert
+       (concat "\n -- "
+               (propertize note
+                           'face '(:height 0.8 :box t)))))
+     (t
       (insert
        (concat
         (when source-term
@@ -493,7 +502,7 @@ and target term, or an example sentence."
         " "
         (propertize (or target-pos
                         "")
-                    'face font-lock-comment-face))))))
+                    'face font-lock-comment-face)))))))
 
 (defun wordreference-propertize-result-term (term)
   "Propertize result TERM in results buffer."

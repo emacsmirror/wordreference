@@ -662,12 +662,19 @@ HTML is what our original query returned."
   "Translate result word or phrase at point.
 Word or phrase at point is determined by button text property."
   (interactive)
-  (let* ((text (buffer-substring-no-properties
+  ;;TODO: remove all [sb] etc from result phrases
+  ;; "assign [sth] to [sb]" should search "assign to"
+  (let* ((result-entry (buffer-substring-no-properties
                 (progn
                   (if (looking-back "[ \t\n]" nil) ; enter range if we tabbed here
                       (forward-char))
                   (previous-single-property-change (point) 'button)) ; range start
                 (next-single-property-change (point) 'button)))
+         ;; handle calling this on a multi-term result:
+         (text (let ((results (split-string result-entry "[,;] ")))
+                 (if (< 1 (length results))
+                     (completing-read "Select or enter search term: " results nil nil)
+                   result-entry)))
          (text-type (get-text-property (point) 'type))
          (text-lang (if (equal text-type 'source)
                         (wordreference-get-results-info-item 'source)

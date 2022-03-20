@@ -48,7 +48,10 @@
 
 (when (require 'helm-dictionary nil :noerror)
   (declare-function helm-dictionary "helm-dictionary")
-  (defvar helm-dictionary-database))
+  (defvar helm-dictionary-database)
+  (defvar wordreference-helm-dictionary-name "fr-en"
+    "The name of the dictionary to use for `helm-dictionary' queries.\
+It must match the key of one of the dictionaries in `helm-dictionary-database'."))
 
 (defgroup wordreference nil
   "Wordreference dictionary interface."
@@ -700,10 +703,11 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
 
 ;; NB: runs on a modified `helm-dictionary'!:
 (defun wordreference-helm-dict-search ()
-  "Search for term in a French `helm-dictionary'."
+  "Search for term in `helm-dictionary'.
+\nUses the dictionary specified in `wordreference-helm-dictionary-name'."
   (interactive)
   (let ((query (plist-get wordreference-results-info 'term)))
-    (helm-dictionary (assoc "fr-en" helm-dictionary-database) query)))
+    (helm-dictionary wordreference-helm-dictionary-name query t)))
 
 (defun wordreference-browse-term-cntrl ()
   "Search for the same term on https://www.cntrl.fr."

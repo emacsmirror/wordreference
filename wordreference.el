@@ -399,6 +399,17 @@ TRS is the list of table rows from the parsed HTML."
                     t nil result))))
   result))
 
+(defun wordreference--cull-conj-arrows (result)
+  "Remove any conjugation arrows from RESULT."
+  (when result
+  (save-match-data
+    (while (string-match " ⇒"
+                         result)
+      (setq result (replace-match
+                    ""
+                    t nil result))))
+  result))
+
 (defun wordreference--cull-single-spaces-in-brackets (result)
   "Remove any spaces inside brackets from RESULT."
   ;;TODO: rewrite to handle single spaces also
@@ -434,8 +445,9 @@ and target term, or an example sentence."
          (source-term-untrimmed (or (plist-get source :from) ; new term
                                     (plist-get source :other))) ; repeat term
          (source-term (when source-term-untrimmed
-                        (wordreference--cull-double-spaces
-                         (string-trim source-term-untrimmed))))
+                        (wordreference--cull-conj-arrows
+                         (wordreference--cull-double-spaces
+                          (string-trim source-term-untrimmed)))))
          (source-pos (plist-get source :pos))
          (source-conj (plist-get source :conj))
          (context (cadr def))

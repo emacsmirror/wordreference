@@ -282,7 +282,8 @@ SOURCE and TARGET are languages."
            (forum-heading-string (dom-texts forum-heading))
            (forum-links (dom-children
                          (dom-by-id post-article "lista_link")))
-           (forum-links-propertized (wordreference-process-forum-links forum-links))
+           (forum-links-propertized
+            (wordreference-process-forum-links forum-links))
            (source-lang (or (plist-get (car pr-trs-results-list) :source)
                             source
                             wordreference-source-lang))
@@ -310,7 +311,10 @@ SOURCE and TARGET are languages."
       (wordreference-print-also-found-entries html-parsed)
       ;; print forums
       (wordreference-print-heading forum-heading-string)
-      (wordreference-print-forum-links forum-links-propertized)
+      (if (dom-by-class forum-links "noThreads")
+          ;; no propertize if no threads:
+          (insert "\n\n" (dom-texts (car forum-links)))
+        (wordreference-print-forum-links forum-links-propertized))
       (setq-local header-line-format
                   (propertize
                    (format "Wordreference results for \"%s\" from %s to %s:"

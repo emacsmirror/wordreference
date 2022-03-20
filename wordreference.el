@@ -389,38 +389,41 @@ TRS is the list of table rows from the parsed HTML."
 
 (defun wordreference--cull-double-spaces (result)
   "Remove any double spaces from RESULT."
+  (when result
   (save-match-data
     (while (string-match "[[:blank:]]\\{2\\}"
                          result)
       (setq result (replace-match
                     " "
                     t nil result))))
-  result)
+  result))
 
 (defun wordreference--cull-single-spaces-in-brackets (result)
   "Remove any spaces inside brackets from RESULT."
   ;;TODO: rewrite to handle single spaces also
-  (save-match-data
-    (while (string-match
-            ;; ( + SPC + any number of chars + SPC + ):
-            "([[:blank:]]\\(.*\\)[[:blank:]])"
-            result)
-      (setq result (replace-match
-                    "(\\1)"
-                    t nil result))))
-  result)
+  (when result
+    (save-match-data
+      (while (string-match
+              ;; ( + SPC + any number of chars + SPC + ):
+              "([[:blank:]]\\(.*\\)[[:blank:]])"
+              result)
+        (setq result (replace-match
+                      "(\\1)"
+                      t nil result))))
+    result))
 
 (defun wordreference--cull-space-between-brackets (result)
   "Remove any spaces between closing brackets from RESULT."
-  (save-match-data
-    (while (string-match
-            ;; ] + SPC + ) :
-            "][[:blank:]])"
-            result)
-      (setq result (replace-match
-                    "])"
-                    t nil result))))
-  result)
+  (when result
+    (save-match-data
+      (while (string-match
+              ;; ] + SPC + ) :
+              "][[:blank:]])"
+              result)
+        (setq result (replace-match
+                      "])"
+                      t nil result))))
+  result))
 
 (defun wordreference-print-single-definition (def)
   "Print a single definition DEF in the buffer.
@@ -429,8 +432,9 @@ and target term, or an example sentence."
   (let* ((source (car def))
          (source-term-untrimmed (or (plist-get source :from) ; new term
                                     (plist-get source :other))) ; repeat term
-         (source-term (wordreference--cull-double-spaces
-                       (string-trim source-term-untrimmed)))
+         (source-term (when source-term-untrimmed
+                        (wordreference--cull-double-spaces
+                         (string-trim source-term-untrimmed))))
          (source-pos (plist-get source :pos))
          (source-conj (plist-get source :conj))
          (context (cadr def))

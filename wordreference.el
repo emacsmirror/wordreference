@@ -345,8 +345,11 @@ SOURCE and TARGET are languages."
     (save-excursion
       (goto-char (point-min))
       (mapc (lambda (x)
-              (while (search-forward-regexp (concat "\\b" x "\\b")
-                                            nil 'noerror)
+              (while (and (search-forward-regexp (concat "\\b" x "\\b")
+                                                 nil 'noerror)
+                          ;;don't add props to note boxes:
+                          (not (equal (get-text-property (point) 'face)
+                                      '(:height 0.8 :box t))))
                 (add-text-properties (- (point) (length x)) (point)
                                      '(face (:inherit success :weight bold))))
               (goto-char (point-min)))

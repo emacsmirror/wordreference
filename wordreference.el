@@ -156,7 +156,7 @@ Optionally specify SOURCE and TARGET languages."
                               (or target
                                   wordreference-target-lang)
                               word)))
-	 (html-buffer (url-retrieve-synchronously url)))
+	     (html-buffer (url-retrieve-synchronously url)))
     (with-current-buffer html-buffer
       (goto-char (point-min))
       (libxml-parse-html-region
@@ -174,7 +174,7 @@ Optionally specify SOURCE and TARGET languages."
          (entries-tr-ul (dom-by-id (car entries-table) "left"))
          (entries-tr-ul-li-ul (dom-by-tag (car entries-tr-ul) 'ul))
          ;; (entries-heading (dom-text
-                           ;; (car entries-tr-ul-li-ul)))
+         ;; (car entries-tr-ul-li-ul)))
          (entries-rest (cdr entries-tr-ul-li-ul))
          (entries-link-list (dom-by-tag (cdr entries-rest) 'a)))
     (mapcar (lambda (x)
@@ -185,9 +185,9 @@ Optionally specify SOURCE and TARGET languages."
   "Get all word tables from list of TABLES."
   (let ((word-tables))
     (mapc (lambda (x)
-              (when (equal (dom-attr x 'class) "WRD")
-                (push x word-tables)))
-            tables)
+            (when (equal (dom-attr x 'class) "WRD")
+              (push x word-tables)))
+          tables)
     (reverse word-tables)))
 
 (defun wordreference--get-trs (word-table)
@@ -198,11 +198,11 @@ Optionally specify SOURCE and TARGET languages."
   "Extract a two letter language code from TD."
   ;; format is "sLang_en", but is it always?
   (when td
-  (substring-no-properties
-   (dom-attr
-    (dom-by-tag td 'span)
-    'data-ph)
-   -2))) ;last two chars
+    (substring-no-properties
+     (dom-attr
+      (dom-by-tag td 'span)
+      'data-ph)
+     -2))) ;last two chars
 
 (defun wordreference-collect-trs-results-list (trs)
   "Process the results found in TRS.
@@ -354,7 +354,7 @@ SOURCE and TARGET are languages."
   (insert (propertize heading
                       'heading t
                       'face '(:inherit font-lock-function-name-face
-                                 :weight bold))))
+                                       :weight bold))))
 
 (defun wordreference-print-tables (tables)
   "Print a list of TABLES."
@@ -380,8 +380,8 @@ TRS is the list of table rows from the parsed HTML."
 (defun wordreference-print-definitions (defs)
   "Print a list of definitions DEFS."
   (mapc (lambda (def)
-            (wordreference-print-single-definition def))
-          defs)
+          (wordreference-print-single-definition def))
+        defs)
   (insert "\n"))
 
 (defun wordreference--cull-double-spaces (result)
@@ -578,25 +578,25 @@ HTML is what our original query returned."
   (mapcar (lambda (x)
             (when (and (not (stringp x)) ; skip " - grammaire" string for now
                        (not (equal (dom-tag x) 'br))) ; skip empty br tags too
-            (let ((forum-text (dom-text x))
-                  (forum-href (dom-attr x 'href)))
-              (propertize forum-text
-                          'button t
-                          'follow-link t
-                          'shr-url forum-href
-                          'keymap wordreference-link-map
-                          'fontified t
-                          'face 'warning
-                          'mouse-face 'highlight
-                          'help-echo (concat "Browse forums for '"
-                                             forum-text "'")))))
+              (let ((forum-text (dom-text x))
+                    (forum-href (dom-attr x 'href)))
+                (propertize forum-text
+                            'button t
+                            'follow-link t
+                            'shr-url forum-href
+                            'keymap wordreference-link-map
+                            'fontified t
+                            'face 'warning
+                            'mouse-face 'highlight
+                            'help-echo (concat "Browse forums for '"
+                                               forum-text "'")))))
           links))
 
 (defun wordreference-print-forum-links (links)
   "Print a list of LINKS to forum entries."
   (mapcar (lambda (x)
             (when x ; skip all our empties
-            (insert "\n\n" x)))
+              (insert "\n\n" x)))
           links))
 
 
@@ -670,8 +670,8 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
   (interactive)
   (let* ((url (concat wordreference-base-url
                       (format "/%s%s/"
-                      wordreference-source-lang
-                      wordreference-target-lang)))
+                              wordreference-source-lang
+                              wordreference-target-lang)))
          (word (plist-get wordreference-results-info 'term))
          (search-url (concat url word))
          (browse-url-browser-function (or wordreference-browse-url-function

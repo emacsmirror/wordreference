@@ -125,6 +125,7 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
     (define-key map (kbd "C") #'wordreference-copy-search-term)
     (define-key map (kbd "d") #'wordreference-helm-dict-search)
     (define-key map (kbd "c") #'wordreference-browse-term-cntrl)
+    (define-key map (kbd "l") #'wordreference-browse-term-linguee)
     (define-key map (kbd "n") #'wordreference-nearby-entries-search)
     (define-key map (kbd ",") #'wordreference-previous-heading)
     (define-key map (kbd ".") #'wordreference-next-heading)
@@ -794,6 +795,19 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
   (let ((query (plist-get wordreference-results-info 'term)))
     (browse-url-generic (concat "https://www.cnrtl.fr/definition/"
                                 query))))
+
+(defun wordreference-browse-term-linguee ()
+  "Search for current term in browser with French Linguee.com."
+  ;;TODO: handle all language pairs
+  (interactive)
+  (let* ((query (plist-get wordreference-results-info 'term))
+         (query-split (split-string query " "))
+         (query-final (if (not (> (length query-split) 1))
+                          query
+                        (string-join query-split "+"))))
+    (browse-url-generic (concat
+                         "https://www.linguee.com/english-french/search?il=EN&tool=opensearch&query="
+                         query-final))))
 
 
 ;;;###autoload

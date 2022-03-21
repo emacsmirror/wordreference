@@ -715,7 +715,8 @@ Word or phrase at point is determined by button text property."
   "Cull any [bracketed] parts of a result ENTRY.
 Used by `wordreference--return-search-word'."
   (save-match-data
-    (while (string-match " \\[.*?\\]" ; SPC + [anything], lazy match
+    (while (string-match " \\(\\+ \\)?\\[.*?\\]"
+                         ;; SPC + possible "+" + [anything], lazy match
                          entry )
       (setq entry (replace-match
                    ""

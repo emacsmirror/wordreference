@@ -6,7 +6,7 @@ It displays terms, part of speech, links to conjugation tables (shown as =▦= o
 
 The sole entry point is =wordreference-search=.
 
-You can customize the default source and target languages =wordreference-source-lang= and =wordreference-target-lang=.
+You can customize the default source and target languages =wordreference-source-lang= and =wordreference-target-lang=. If you call =wordreference-search= with a prefix argument, you can also choose your languages interactively.
 
 In the results buffer:
 
@@ -20,3 +20,17 @@ In the results buffer:
 - =n= to list and search nearby entries
 - =c= to search same term on https://www.cntrl.fr
 - =S= to swap source and target and search for same term again
+
+The package has been tested with French <> English and Portuguese <> English. Other languages work but may not be parsed as well.
+
+It looks like this:
+
+[[file:wordreference-screenshot.png][file:./wordreference-screenshot.png]]
+
+** other packages
+
+You may also be interested in [[https://github.com/mtenders/emacs-leo][emacs-leo]].
+
+** To-do
+
+- [ ] definition searches

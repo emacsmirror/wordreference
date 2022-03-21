@@ -690,7 +690,7 @@ Word or phrase at point is determined by button text property."
                        (wordreference-cull-brackets-from-entry-list
                         (split-string result-entry "[,;] "))))
                  (if (< 1 (length results))
-                     (completing-read "Select or enter search term: " results nil nil)
+                     (completing-read "Select or enter search term: " results nil nil nil nil (car results))
                    result-entry)))
          (text-type (get-text-property (point) 'type))
          (text-lang (if (equal text-type 'source)

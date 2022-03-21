@@ -510,12 +510,13 @@ and target term, or an example sentence."
         (propertize "--> "
                     'face font-lock-comment-face)
         (when target-term
-          (propertize target-term
-                      'button t
-                      'type 'target
-                      'keymap wordreference-result-search-map
-                      'help-echo "RET to search wordreference for this term"
-                      'face 'warning))
+          (wordreference-unpropertize-source-phrase-in-target
+           (propertize target-term
+                       'button t
+                       'type 'target
+                       'keymap wordreference-result-search-map
+                       'help-echo "RET to search wordreference for this term"
+                       'face 'warning)))
         (when target-conj
           (concat
            " "
@@ -722,6 +723,18 @@ Used by `wordreference--return-search-word'."
                    ""
                    t nil entry))))
   entry)
+
+(defun wordreference-unpropertize-source-phrase-in-target (entry)
+  "Remove properties from any source phrase in ENTRY."
+  (save-match-data
+    (if (string-match ".* :"
+                  ;; any chars + SPC + :
+                        entry)
+        (let ((match (match-string-no-properties 0 entry)))
+                (replace-match
+                       match
+                       t nil entry))
+      entry))) ; else do nothing
 
 (defun wordreference-browse-url-results ()
   "Open the current results in external browser.

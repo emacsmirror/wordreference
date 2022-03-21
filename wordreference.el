@@ -100,6 +100,10 @@ It must match the key of one of the dictionaries in `helm-dictionary-database'."
   :group 'wordreference
   :type 'string)
 
+(defvar wordreference-languages-full
+  '("en" "fr" "it" "es" "pt" "de" "ru" "tr" "gr" "cz" "pl" "zh" "ja" "ko" "ar" "is" "nl" "sv")
+  "List of all wordreference languages.")
+
 (defvar wordreference-base-url
   "https://www.wordreference.com"
   "Base wordreference URL.")
@@ -699,7 +703,7 @@ Word or phrase at point is determined by button text property."
          (other-lang (if (equal text-type 'source)
                          (wordreference-get-results-info-item 'target)
                        (wordreference-get-results-info-item 'source))))
-    (wordreference-search text text-lang other-lang)))
+    (wordreference-search nil text text-lang other-lang)))
 
 (defun wordreference-cull-brackets-from-entry-list (entries)
   "Cull any [bracketed] parts of a results in ENTRIES."
@@ -748,7 +752,7 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
   (let ((target (plist-get wordreference-results-info 'source))
         (source (plist-get wordreference-results-info 'target))
         (term (plist-get wordreference-results-info 'term)))
-    (wordreference-search term source target)))
+    (wordreference-search nil term source target)))
 
 (defun wordreference-nearby-entries-search ()
   "Select an item from nearby dictionary items and search for it."
@@ -757,7 +761,7 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
                                wordreference-nearby-entries
                                nil
                                nil)))
-    (wordreference-search word)))
+    (wordreference-search nil word)))
 
 ;; NB: runs on a modified `helm-dictionary'!:
 (defun wordreference-helm-dict-search ()
@@ -779,15 +783,35 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
 
 
 ;;;###autoload
-(defun wordreference-search (&optional word source target)
+(defun wordreference-search (&optional prefix word source target)
   "Search wordreference for region, `word-at-point', or user input.
-Optionally specify WORD, SOURCE and TARGET languages."
-  (interactive)
-  (let* ((region (if (equal major-mode 'pdf-view-mode)
+Optionally specify WORD, SOURCE and TARGET languages.
+With a PREFIX arg, prompt for source and target language pair."
+  (interactive "P")
+  (let* ((source (or source ;from lisp
+                     (if prefix ;prefix arg
+                         (completing-read "From source: "
+                                          wordreference-languages-full
+                                          nil
+                                          t)
+                       (or
+                        ;; prev search
+                        (wordreference-get-results-info-item 'source)
+                           wordreference-source-lang)))) ; fallback
+         (target (or target
+                     (if prefix
+                         (completing-read "To source: "
+                                          wordreference-languages-full
+                                          nil
+                                          t)
+                       (or (wordreference-get-results-info-item 'target)
+                           wordreference-target-lang))))
+         (region (if (equal major-mode 'pdf-view-mode)
                      (when (region-active-p)
                        (pdf-view-active-region-text))
                    (when (use-region-p)
-                     (buffer-substring-no-properties (region-beginning) (region-end)))))
+                     (buffer-substring-no-properties (region-beginning)
+                                                     (region-end)))))
          (word (or word
                    (read-string (format "Wordreference search (%s): "
                                         (or region (current-word) ""))

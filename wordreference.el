@@ -432,7 +432,10 @@ SOURCE and TARGET are languages."
                                                  nil 'noerror)
                           ;;don't add props to note boxes:
                           (not (equal (get-text-property (point) 'face)
-                                      '(:height 0.8 :box t))))
+                                      '(:height 0.8 :box t)))
+                          ;; don't add props to sense and register text:
+                          (not (equal (get-text-property (point) 'face)
+                                      '(:inherit font-lock-comment-face :slant italic))))
                 (add-text-properties (- (point) (length x)) (point)
                                      '(face (:inherit success :weight bold))))
               (goto-char (point-min)))

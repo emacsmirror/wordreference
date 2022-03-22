@@ -104,6 +104,10 @@ It must match the key of one of the dictionaries in `helm-dictionary-database'."
   '("en" "fr" "it" "es" "pt" "de" "ru" "tr" "gr" "cz" "pl" "zh" "ja" "ko" "ar" "is" "nl" "sv")
   "List of all wordreference languages.")
 
+(defvar wordreference-languages-server-list
+  (wordreference--get-supported-lang-pairs)
+  "The list of supported languges fetched from the server.")
+
 (defvar wordreference-base-url
   "https://www.wordreference.com"
   "Base wordreference URL.")
@@ -148,6 +152,37 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
 
 
 ;; REQUESTING AND PARSING
+
+(defun wordreference--get-supported-lang-pairs ()
+  "Query wordreference.com for supported language pairs."
+  (let* ((html-buffer (url-retrieve-synchronously
+                       wordreference-base-url))
+         (html-parsed
+          (with-current-buffer html-buffer
+            (goto-char (point-min))
+            (libxml-parse-html-region
+             (search-forward "\n\n") (point-max))))
+         (langs (dom-by-tag
+                 (dom-by-class html-parsed "custom-select")
+                 'option)))
+    (wordreference-parse-langs langs)))
+
+(defun wordreference-parse-langs (langs)
+  "Return a nested list containing infomation about supported language pairs LANGS."
+  (mapcar (lambda (x)
+            (wordreference-get-lang-elements x))
+            langs))
+
+(defun wordreference-get-lang-elements (lang)
+  "Return a list containing information about a supported language pair LANG.
+The elements are formatted as follows: \"Spanish-English\" \"esen\" \"es\" \"en\"."
+  (list
+   (dom-text lang)
+   (dom-attr lang 'id)
+   (substring (dom-attr lang 'id)
+              0 2)
+   (substring (dom-attr lang 'id)
+              2 4)))
 
 (defun wordreference--retrieve-parse-html (word &optional source target)
   "Query wordreference.com for WORD, and parse the HTML response.

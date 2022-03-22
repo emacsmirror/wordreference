@@ -940,17 +940,36 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
                                 query))))
 
 (defun wordreference-browse-term-linguee ()
-  "Search for current term in browser with French Linguee.com."
+  "Search for current term in browser with Linguee.com."
   ;;TODO: handle all language pairs
+  ;; fetch t
   (interactive)
   (let* ((query (plist-get wordreference-results-info 'term))
          (query-split (split-string query " "))
          (query-final (if (not (> (length query-split) 1))
                           query
-                        (string-join query-split "+"))))
+                        (string-join query-split "+")))
+         (source (plist-get wordreference-results-info 'source))
+         (target (plist-get wordreference-results-info 'target))
+         (langs-full
+          (wordreference--lang-pair-from-abbrev source target)))
     (browse-url-generic (concat
-                         "https://www.linguee.com/english-french/search?il=EN&tool=opensearch&query="
+                         "https://www.linguee.com/"
+                         langs-full
+                         "/search?query="
                          query-final))))
+
+(defun wordreference--lang-pair-from-abbrev (source target)
+  "Use two-letter SOURCE and TARGET abbrevs to collect full language pairs.
+The resulting format is like \"english-french\"."
+  (let* ((lang-pairs-abbrev (concat source target))
+         langs-match)
+    (mapc (lambda (x)
+            (when (string-equal (plist-get x 'source-target)
+                                lang-pairs-abbrev)
+              (push x langs-match)))
+          wordreference-languages-server-list)
+    (downcase (plist-get (car langs-match) 'langs))))
 
 
 ;;;###autoload

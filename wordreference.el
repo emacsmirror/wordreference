@@ -245,7 +245,7 @@ example for an example, and other for everything else."
          (let* ((to-or-from (if (dom-by-class td "ToWrd")
                                 :to
                               :from))
-                (em (dom-by-class td "tooltip POS2"))
+                (em (dom-by-class td "POS2"))
                 (pos (dom-text em))
                 (tooltip (dom-by-tag em 'span))
                 (tooltip-text (dom-texts tooltip))
@@ -259,13 +259,35 @@ example for an example, and other for everything else."
                                   'a))
                         (dom-by-tag td 'a)))
                 (conj-link-suffix (dom-attr conj 'href)))
-           `(,to-or-from ,term-text :pos ,pos :tooltip ,tooltip-text :conj ,conj-link-suffix)))
-        ((or (dom-by-class td "ToEx")
-             (dom-by-class td "FrEx"))
-         `(:example ,(dom-texts td)))
+           `(,to-or-from ,term-text
+                         :pos ,pos
+                         :tooltip ,tooltip-text
+                         :conj ,conj-link-suffix)))
+        ((dom-by-class td "ToEx")
+         `(:to-eg ,(dom-texts td)))
+        ((dom-by-class td "FrEx")
+         `(:from-eg ,(dom-texts td)))
         ((or (dom-by-class td "notePubl")
              (string-prefix-p "Note :" (dom-texts td)))
          `(:note ,(dom-texts td)))
+        ((string= " " (dom-texts td))
+         `(:repeat "\"\""))
+        ;; simple to sense:
+        ((dom-by-class td "To2")
+         `(:to-sense ,(dom-texts td)))
+        ((dom-by-class td "Fr2")
+         ;; complex register, to sense and from sense:
+         `(:register ,(dom-texts (dom-by-class td "Fr2"))
+                     :from-sense ,(dom-text (dom-children td))
+                     :to-sense ,(dom-texts (dom-by-class
+                                            (dom-children td)
+                                            "sense"))))
+        ;; simple from and poss to sense
+        ((string-prefix-p " (" (dom-texts td))
+         `(:from-sense ,(dom-text td)
+                       :to-sense ,(dom-texts
+                                  (dom-by-class td
+                                                "sense"))))
         (t
          `(:other ,(dom-texts td)))))
 
@@ -483,20 +505,20 @@ TRS is the list of table rows from the parsed HTML."
 and target term, or an example sentence."
   (let* ((source (car def))
          (source-term-untrimmed (or (plist-get source :from) ; new term
-                                    (plist-get source :other))) ; repeat term
+                                    (plist-get source :repeat))) ; repeat term
          (source-term (when source-term-untrimmed
                         (wordreference--cull-conj-arrows
                          (wordreference--cull-double-spaces
                           (string-trim source-term-untrimmed)))))
          (source-pos (plist-get source :pos))
          (source-conj (plist-get source :conj))
-         (context (cadr def))
-         (context-term-untrimmed (plist-get context :other))
-         (context-term (when context-term-untrimmed
-                         (wordreference--cull-double-spaces
-                          (wordreference--cull-single-spaces-in-brackets
-                           (wordreference--cull-space-between-brackets
-                            (string-trim context-term-untrimmed))))))
+
+         (source-sense (wordreference--process-sense-string
+                        (plist-get (cadr def) :from-sense)))
+         (register (plist-get (cadr def) :register))
+         (target-sense (wordreference--process-sense-string
+                        (plist-get (cadr def) :to-sense)))
+
          (target (caddr def))
          (target-term
           (when target (wordreference--cull-double-spaces
@@ -504,8 +526,9 @@ and target term, or an example sentence."
                          (plist-get target :to)))))
          (target-pos (plist-get target :pos))
          (target-conj (plist-get target :conj))
-         (eg (when (string= (plist-get source :other) " ")
-               (plist-get context :example)))
+
+         (eg (or (plist-get (cadr def) :to-eg)
+                 (plist-get (cadr def) :from-eg)))
          (note (plist-get source :note)))
 
     (cond
@@ -523,7 +546,7 @@ and target term, or an example sentence."
       (insert
        (concat
         (when source-term
-          (if (string= source-term " ")
+          (if (string= source-term "\"\"")
               (propertize "\n\"\"" ;; for repeat terms
                           'face font-lock-comment-face)
             (concat
@@ -538,10 +561,16 @@ and target term, or an example sentence."
                         "")
                     'face font-lock-comment-face)
         " "
-        (when (and context-term
-                   (not (string= context-term " ")))
-          (propertize context-term
-                      'face '(:inherit font-lock-comment-face :slant italic)))
+        (when register
+          (concat
+           (propertize register
+                       'face '(:inherit font-lock-comment-face
+                                        :slant italic))
+                  " "))
+        (when source-sense
+          (propertize source-sense
+                      'face '(:inherit font-lock-comment-face
+                                       :slant italic)))
         "\n           "
         (propertize "--> "
                     'face font-lock-comment-face)
@@ -560,7 +589,12 @@ and target term, or an example sentence."
         " "
         (propertize (or target-pos
                         "")
-                    'face font-lock-comment-face)))))))
+                    'face font-lock-comment-face)
+        (when target-sense
+          (concat " "
+                  (propertize target-sense
+                              'face '(:inherit font-lock-comment-face
+                                               :slant italic))))))))))
 
 (defun wordreference-propertize-result-term (term)
   "Propertize result TERM in results buffer."

@@ -417,7 +417,9 @@ SOURCE and TARGET are languages."
       (setq-local wordreference-results-info
                   `(term ,word
                          source ,source-lang
-                         target ,target-lang))
+                         target ,target-lang
+                         langs-info ,(wordreference--fetch-lang-info-from-abbrev
+                                      source-lang target-lang)))
       (setq-local wordreference-nearby-entries
                   (wordreference--get-nearby-entries html-parsed))
       (wordreference--make-buttons)

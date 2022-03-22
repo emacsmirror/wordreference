@@ -269,9 +269,25 @@ example for an example, and other for everything else."
                          :conj ,conj-link-suffix
                          :usage ,usage)))
         ((dom-by-class td "ToEx")
-         `(:to-eg ,(dom-texts td)))
+         (if (dom-by-class (dom-by-class td "ToEx") "tooltip")
+             `(:to-eg ,(concat
+                       (dom-texts (dom-by-tag
+                                   (dom-by-class td "ToEx")
+                                   'b))
+                       (dom-text (dom-by-tag
+                                  (dom-by-class td "ToEx")
+                                  'span))))
+           `(:to-eg ,(dom-texts td))))
         ((dom-by-class td "FrEx")
-         `(:from-eg ,(dom-texts td)))
+         (if (dom-by-class (dom-by-class td "FrEx") "tooltip")
+             `(:from-eg ,(concat
+                           (dom-texts (dom-by-tag
+                                       (dom-by-class td "FrEx")
+                                       'b))
+                           (dom-text (dom-by-tag
+                                      (dom-by-class td "FrEx")
+                                      'span))))
+           `(:from-eg ,(dom-texts td))))
         ((or (dom-by-class td "notePubl")
              (string-prefix-p "Note :" (dom-texts td)))
          `(:note ,(dom-texts td)))
@@ -291,8 +307,8 @@ example for an example, and other for everything else."
         ((string-prefix-p " (" (dom-texts td))
          `(:from-sense ,(dom-text td)
                        :to-sense ,(dom-texts
-                                  (dom-by-class td
-                                                "sense"))))
+                                   (dom-by-class td
+                                                 "sense"))))
         (t
          `(:other ,(dom-texts td)))))
 

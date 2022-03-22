@@ -236,14 +236,14 @@ followed by a list of textual results returned by
             tds)))
 
 (defun wordreference-build-example (td to-or-from)
-  ""
+  "Build a simple or complex TO-OR-FROM example from TD."
   (let ((dom (dom-by-class td to-or-from)))
     (if (dom-by-class dom "tooltip")
         (wordreference--build-complex-example dom to-or-from)
       `(:to-eg ,(dom-texts td)))))
 
 (defun wordreference--build-complex-example (dom to-or-from)
-  ""
+  "Build a complex TO-OR-FROM example from DOM."
   `(,(if (string= to-or-from "ToEx") :to-eg :from-eg)
     ,(concat
       (dom-text
@@ -281,7 +281,7 @@ example for an example, and other for everything else."
                         (dom-by-tag td 'a)))
                 (conj-link-suffix (dom-attr conj 'href))
                 (usage-list (dom-by-class td "engusg"))
-                (usage (dom-attr (car (dom-by-tag wr-usage 'a))
+                (usage (dom-attr (car (dom-by-tag usage-list 'a))
                                  'href)))
            `(,to-or-from ,term-text
                          :pos ,pos
@@ -443,24 +443,24 @@ TRS is the list of table rows from the parsed HTML."
 (defun wordreference--cull-double-spaces (result)
   "Remove any double spaces from RESULT."
   (when result
-  (save-match-data
-    (while (string-match "[[:blank:]]\\{2\\}"
-                         result)
-      (setq result (replace-match
-                    " "
-                    t nil result))))
-  result))
+    (save-match-data
+      (while (string-match "[[:blank:]]\\{2\\}"
+                           result)
+        (setq result (replace-match
+                      " "
+                      t nil result))))
+    result))
 
 (defun wordreference--cull-conj-arrows (result)
   "Remove any conjugation arrows from RESULT."
   (when result
-  (save-match-data
-    (while (string-match " ⇒"
-                         result)
-      (setq result (replace-match
-                    ""
-                    t nil result))))
-  result))
+    (save-match-data
+      (while (string-match " ⇒"
+                           result)
+        (setq result (replace-match
+                      ""
+                      t nil result))))
+    result))
 
 (defun wordreference--cull-single-spaces-in-brackets (result)
   "Remove any spaces inside brackets from RESULT."
@@ -492,15 +492,15 @@ TRS is the list of table rows from the parsed HTML."
               ;; "([[:blank:]]+\\(.*\\))"
               result)
         (setq result (replace-match
-                          "(\\2)"
-                          t nil result))));)
+                      "(\\2)"
+                      t nil result))));)
     ;; (while (string-match
-            ;; ( + anything + one or more SPC + )
-              ;; "(\\(.*\\)[[:blank:]]+)"
-              ;; result)
-        ;; (setq result (replace-match
-                      ;; "(\\1)"
-                      ;; t nil result)));)
+    ;; ( + anything + one or more SPC + )
+    ;; "(\\(.*\\)[[:blank:]]+)"
+    ;; result)
+    ;; (setq result (replace-match
+    ;; "(\\1)"
+    ;; t nil result)));)
     result))
 
 (defun wordreference--cull-space-between-brackets (result)
@@ -514,10 +514,10 @@ TRS is the list of table rows from the parsed HTML."
         (setq result (replace-match
                       "])"
                       t nil result))))
-  result))
+    result))
 
 (defun wordreference--process-sense-string (str)
-  ""
+  "Remove unwanted characters from a context/sense string STR."
   (when str
     (string-trim
      (wordreference--cull-double-spaces
@@ -786,15 +786,15 @@ Word or phrase at point is determined by button text property."
   (let* ((result-entry
           (wordreference-cull-brackets-from-entry
            (buffer-substring-no-properties
-                 (progn
-                   (if (looking-back "[ \t\n]" nil) ; enter range if we tabbed here
-                       (forward-char))
-                   (previous-single-property-change (point) 'button)) ; range start
-                 (next-single-property-change (point) 'button))))
+            (progn
+              (if (looking-back "[ \t\n]" nil) ; enter range if we tabbed here
+                  (forward-char))
+              (previous-single-property-change (point) 'button)) ; range start
+            (next-single-property-change (point) 'button))))
          ;; handle calling this on a multi-term result:
          (text (let ((results
-                       (wordreference-cull-brackets-from-entry-list
-                        (split-string result-entry "[,;] "))))
+                      (wordreference-cull-brackets-from-entry-list
+                       (split-string result-entry "[,;] "))))
                  (if (< 1 (length results))
                      (completing-read "Select or enter search term: " results nil nil nil nil (car results))
                    result-entry)))
@@ -829,12 +829,12 @@ Used by `wordreference--return-search-word'."
   "Remove properties from any source phrase in ENTRY."
   (save-match-data
     (if (string-match ".* :"
-                  ;; any chars + SPC + :
-                        entry)
+                      ;; any chars + SPC + :
+                      entry)
         (let ((match (match-string-no-properties 0 entry)))
-                (replace-match
-                       match
-                       t nil entry))
+          (replace-match
+           match
+           t nil entry))
       entry))) ; else do nothing
 
 (defun wordreference-browse-url-results ()
@@ -925,7 +925,7 @@ With a PREFIX arg, prompt for source and target language pair."
                        (or
                         ;; prev search
                         (wordreference-get-results-info-item 'source)
-                           wordreference-source-lang)))) ; fallback
+                        wordreference-source-lang)))) ; fallback
          (target (or target
                      (if prefix
                          (completing-read "To source: "

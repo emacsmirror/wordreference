@@ -235,6 +235,27 @@ followed by a list of textual results returned by
               (wordreference-build-single-td-list x))
             tds)))
 
+(defun wordreference-build-example (td to-or-from)
+  ""
+  (let ((dom (dom-by-class td to-or-from)))
+    (if (dom-by-class dom "tooltip")
+        (wordreference--build-complex-example dom to-or-from)
+      `(:to-eg ,(dom-texts td)))))
+
+(defun wordreference--build-complex-example (dom to-or-from)
+  ""
+  `(,(if (string= to-or-from "ToEx") :to-eg :from-eg)
+    ,(concat
+      (dom-text
+       (dom-by-tag
+        (dom-by-class dom "tooltip")
+        'b))
+      (dom-text (dom-by-tag
+                 dom 'span)))
+    :tooltip ,(dom-text (dom-child-by-tag
+                         (dom-by-class dom "tooltip")
+                         'span))))
+
 (defun wordreference-build-single-td-list (td)
   "Return textual result for a single TD.
 \nReturns a property list containing to or from term, position of
@@ -262,32 +283,15 @@ example for an example, and other for everything else."
                 (usage-list (dom-by-class td "engusg"))
                 (usage (dom-attr (car (dom-by-tag wr-usage 'a))
                                  'href)))
-                              ;; (dom-attr x 'href)))
            `(,to-or-from ,term-text
                          :pos ,pos
                          :tooltip ,tooltip-text
                          :conj ,conj-link-suffix
                          :usage ,usage)))
         ((dom-by-class td "ToEx")
-         (if (dom-by-class (dom-by-class td "ToEx") "tooltip")
-             `(:to-eg ,(concat
-                       (dom-texts (dom-by-tag
-                                   (dom-by-class td "ToEx")
-                                   'b))
-                       (dom-text (dom-by-tag
-                                  (dom-by-class td "ToEx")
-                                  'span))))
-           `(:to-eg ,(dom-texts td))))
+         (wordreference-build-example td "ToEx"))
         ((dom-by-class td "FrEx")
-         (if (dom-by-class (dom-by-class td "FrEx") "tooltip")
-             `(:from-eg ,(concat
-                           (dom-texts (dom-by-tag
-                                       (dom-by-class td "FrEx")
-                                       'b))
-                           (dom-text (dom-by-tag
-                                      (dom-by-class td "FrEx")
-                                      'span))))
-           `(:from-eg ,(dom-texts td))))
+         (wordreference-build-example td "FrEx"))
         ((or (dom-by-class td "notePubl")
              (string-prefix-p "Note :" (dom-texts td)))
          `(:note ,(dom-texts td)))
@@ -560,7 +564,8 @@ and target term, or an example sentence."
       (insert
        (concat "\n -- "
                (propertize eg
-                           'face '(:height 0.8)))))
+                           'face '(:height 0.8)
+                           'help-echo (plist-get (cadr def) :tooltip)))))
      (note
       (insert
        (concat "\n -- "

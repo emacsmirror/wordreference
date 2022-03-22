@@ -274,11 +274,12 @@ example for an example, and other for everything else."
                  (if (dom-by-class td "FrWrd")
                      (dom-texts (dom-by-tag td 'strong))
                    (dom-text td)))
-                (conj (if (dom-by-class td "FrWrd")
-                          (progn (dom-by-tag
-                                  (dom-by-tag td 'strong)
-                                  'a))
-                        (dom-by-tag td 'a)))
+                (conj (dom-by-class td "conjugate"))
+                 ;; (if (dom-by-class td "FrWrd")
+                          ;; (progn (dom-by-tag
+                                  ;; (dom-by-tag td 'strong)
+                                  ;; 'a))
+                        ;; (dom-by-tag td 'a)))
                 (conj-link-suffix (dom-attr conj 'href))
                 (usage-list (dom-by-class td "engusg"))
                 (usage (dom-attr (car (dom-by-tag usage-list 'a))

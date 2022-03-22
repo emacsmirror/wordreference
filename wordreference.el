@@ -458,24 +458,24 @@ TRS is the list of table rows from the parsed HTML."
               ;; "([[:blank:]]+\\(.*\\)[[:blank:]]+)"
 
               ;; alternative mega regex handles both:
-              ;; "\\(([[:blank:]]+\\(.*[[:alnum:]$]\\)[[:blank:]]?)\\|(\\(.*?\\)[[:blank:]]+)\\)"
-              ;; but this means sometimes we need to use \\2 and sometimes \\3 in replace-match
+              ;; (we name both our groups 2 so we always catch the right info regardless of which part matches)
+              "\\(([[:blank:]]+\\(?2:.*[[:alnum:]$]\\)[[:blank:]]?)\\|(\\(?2:.*?\\)[[:blank:]]+)\\)"
 
               ;; let's just run it twice for beg and end brackets:
 
               ;; ( + one or more SPC + anything + )
-              "([[:blank:]]+\\(.*\\))"
+              ;; "([[:blank:]]+\\(.*\\))"
               result)
         (setq result (replace-match
-                      "(\\1)"
-                      t nil result))))
-    (while (string-match
+                          "(\\2)"
+                          t nil result))));)
+    ;; (while (string-match
             ;; ( + anything + one or more SPC + )
-              "(\\(.*\\)[[:blank:]]+)"
-              result)
-        (setq result (replace-match
-                      "(\\1)"
-                      t nil result)));)
+              ;; "(\\(.*\\)[[:blank:]]+)"
+              ;; result)
+        ;; (setq result (replace-match
+                      ;; "(\\1)"
+                      ;; t nil result)));)
     result))
 
 (defun wordreference--cull-space-between-brackets (result)

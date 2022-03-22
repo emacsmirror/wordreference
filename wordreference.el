@@ -112,10 +112,9 @@ It must match the key of one of the dictionaries in `helm-dictionary-database'."
   "https://www.wordreference.com"
   "Base wordreference URL.")
 
-(defvar wordreference-results-info nil
+(defvar-local wordreference-results-info nil
   "Information about the current results from a word reference search.
 Used to store search term for `wordreference-leo-browse-url-results'.")
-(make-variable-buffer-local 'wordreference-results-info)
 
 (defvar-local wordreference-nearby-entries nil)
 
@@ -254,10 +253,8 @@ followed by a list of textual results returned by
   (let* ((title-tr (car trs))
          (langs-tr (cadr trs))
          (source-td (dom-by-class langs-tr "FrWrd"))
-         ;; (source-word (dom-texts source-td))
          (source-abbrev (wordreference-extract-lang-code-from-td source-td))
          (target-td (dom-by-class langs-tr "ToWrd"))
-         ;; (target-word (dom-texts target-td))
          (target-abbrev (wordreference-extract-lang-code-from-td target-td))
          (words-trs (cddr trs)))
     (list
@@ -313,11 +310,6 @@ example for an example, and other for everything else."
                      (dom-texts (dom-by-tag td 'strong))
                    (dom-text td)))
                 (conj (dom-by-class td "conjugate"))
-                 ;; (if (dom-by-class td "FrWrd")
-                          ;; (progn (dom-by-tag
-                                  ;; (dom-by-tag td 'strong)
-                                  ;; 'a))
-                        ;; (dom-by-tag td 'a)))
                 (conj-link-suffix (dom-attr conj 'href))
                 (usage-list (dom-by-class td "engusg"))
                 (usage (dom-attr (car (dom-by-tag usage-list 'a))
@@ -505,43 +497,18 @@ TRS is the list of table rows from the parsed HTML."
 
 (defun wordreference--cull-single-spaces-in-brackets (result)
   "Remove any spaces inside brackets from RESULT."
-  ;;TODO: rewrite to handle single spaces also
   (when result
     (save-match-data
       (while (string-match
-              ;; ( + zero or more SPC + any number of non-SPC
-              ;; + zero or more SPC + ):
-              ;; doesn't handle multi words:
-              ;; "([[:blank:]]+?\\([^[:blank:]]+\\)[[:blank:]]*)"
-
-              ;; NEED to handle:
-              ;; -- multi words/spaces in between
-              ;; -- zero or more space(s) at each end
-              ;; -- but not zero at BOTH ends, otherwise everything matches
-
-              ;; only handles spaces at both ends:
-              ;; ( + one or more SPC + any chars in SPC + one or more SPC + )
-              ;; "([[:blank:]]+\\(.*\\)[[:blank:]]+)"
-
-              ;; alternative mega regex handles both:
-              ;; (we name both our groups 2 so we always catch the right info regardless of which part matches)
+              ;; alternative mega regex :
+              ;; (we name both our groups 2 to always catch the match)
               "\\(([[:blank:]]+\\(?2:.*[[:alnum:]$]\\)[[:blank:]]?)\\|(\\(?2:.*?\\)[[:blank:]]+)\\)"
 
-              ;; let's just run it twice for beg and end brackets:
-
-              ;; ( + one or more SPC + anything + )
-              ;; "([[:blank:]]+\\(.*\\))"
               result)
         (setq result (replace-match
                       "(\\2)"
                       t nil result))));)
-    ;; (while (string-match
-    ;; ( + anything + one or more SPC + )
-    ;; "(\\(.*\\)[[:blank:]]+)"
-    ;; result)
-    ;; (setq result (replace-match
-    ;; "(\\1)"
-    ;; t nil result)));)
+
     result))
 
 (defun wordreference--cull-space-between-brackets (result)
@@ -822,8 +789,6 @@ HTML is what our original query returned."
   "Translate result word or phrase at point.
 Word or phrase at point is determined by button text property."
   (interactive)
-  ;;TODO: remove all [sb] etc from result phrases
-  ;; "assign [sth] to [sb]" should search "assign to"
   (let* ((result-entry
           (wordreference-cull-brackets-from-entry
            (buffer-substring-no-properties

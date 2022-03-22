@@ -176,13 +176,20 @@ Used to store search term for `wordreference-leo-browse-url-results'.")
 (defun wordreference-get-lang-elements (lang)
   "Return a list containing information about a supported language pair LANG.
 The elements are formatted as follows: \"Spanish-English\" \"esen\" \"es\" \"en\"."
-  (list
-   (dom-text lang)
-   (dom-attr lang 'id)
-   (substring (dom-attr lang 'id)
-              0 2)
-   (substring (dom-attr lang 'id)
-              2 4)))
+  (let ((langs-split (split-string (dom-text lang) "-")))
+    (list
+     'langs
+     (dom-text lang)
+     'source-full (car langs-split)
+     'target-full (cadr langs-split)
+     'source-target
+     (dom-attr lang 'id)
+     'source
+     (substring (dom-attr lang 'id)
+                0 2)
+     'target
+     (substring (dom-attr lang 'id)
+                2 4))))
 
 (defun wordreference--retrieve-parse-html (word &optional source target)
   "Query wordreference.com for WORD, and parse the HTML response.

@@ -430,7 +430,7 @@ SOURCE and TARGET are languages."
   ;; handle searching again from wr:
   (when (not (equal (buffer-name (current-buffer)) "*wordreference*"))
     (switch-to-buffer-other-window (get-buffer "*wordreference*")))
-  (message "w/s: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms, C: copy search term, n: browse nearby entries, S: switch langs and search, c: browse on www.cntrl.fr."))
+  (message "w/s: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms, C: copy search term, n: browse nearby entries, S: switch langs and search, l: search with linguee.com, c: browse on www.cntrl.fr."))
 
 (defun wordreference-prop-query-in-results (word)
   "Propertize query WORD in results buffer."

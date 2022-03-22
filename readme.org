@@ -19,7 +19,7 @@ In the results buffer:
 - =C= to copy current search term
 - =n= to list and search nearby entries in the dictionary
 - =c= to search same term on https://www.cntrl.fr
-- =l= to search the same term on https://www.linguee.com [currenly only FR <> EN]
+- =l= to search the same term on https://www.linguee.com
 - =S= to swap source and target and search for same term again
 
 The package has been tested with French <> English and Portuguese <> English. Other languages work but may not be parsed as well.

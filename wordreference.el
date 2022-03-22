@@ -421,12 +421,36 @@ TRS is the list of table rows from the parsed HTML."
   (when result
     (save-match-data
       (while (string-match
-              ;; ( + SPC + any number of chars + SPC + ):
-              "([[:blank:]]\\(.*\\)[[:blank:]])"
+              ;; ( + zero or more SPC + any number of non-SPC
+              ;; + zero or more SPC + ):
+              ;; this doesn't handle multi words:
+              ;; "([[:blank:]]+?\\([^[:blank:]]+\\)[[:blank:]]*)"
+
+              ;; NEED to handle:
+              ;; -- multi words in between
+              ;; -- zero or more space(s) at each end
+              ;; -- but not zero at BOTH ends, otherwise everything matches
+
+              ;; cd do two runs on the one string?
+
+              ;; for now this only handles spaces at both ends:
+              ;; ( + one or more SPC + any chars in SPC + one or more SPC + )
+              ;; "([[:blank:]]+\\(.*\\)[[:blank:]]+)"
+
+              ;; ( + one or more SPC + anything + )
+              "([[:blank:]]+\\(.*\\))"
               result)
         (setq result (replace-match
                       "(\\1)"
                       t nil result))))
+    ;; (save-match-data
+    (while (string-match
+            ;; ( + anything + one or more SPC + )
+              "(\\(.*\\)[[:blank:]]+)"
+              result)
+        (setq result (replace-match
+                      "(\\1)"
+                      t nil result)));)
     result))
 
 (defun wordreference--cull-space-between-brackets (result)
@@ -441,6 +465,17 @@ TRS is the list of table rows from the parsed HTML."
                       "])"
                       t nil result))))
   result))
+
+(defun wordreference--process-sense-string (str)
+  ""
+  (when str
+    (string-trim
+     (wordreference--cull-double-spaces
+      (wordreference--cull-single-spaces-in-brackets
+       (wordreference--cull-space-between-brackets
+        str)))
+     "[ \\t\\n\\r ]+" ;; add our friend  
+     "[ \\t\\n\\r ]+")))
 
 (defun wordreference-print-single-definition (def)
   "Print a single definition DEF in the buffer.

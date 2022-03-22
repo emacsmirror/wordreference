@@ -258,11 +258,16 @@ example for an example, and other for everything else."
                                   (dom-by-tag td 'strong)
                                   'a))
                         (dom-by-tag td 'a)))
-                (conj-link-suffix (dom-attr conj 'href)))
+                (conj-link-suffix (dom-attr conj 'href))
+                (usage-list (dom-by-class td "engusg"))
+                (usage (dom-attr (car (dom-by-tag wr-usage 'a))
+                                 'href)))
+                              ;; (dom-attr x 'href)))
            `(,to-or-from ,term-text
                          :pos ,pos
                          :tooltip ,tooltip-text
-                         :conj ,conj-link-suffix)))
+                         :conj ,conj-link-suffix
+                         :usage ,usage)))
         ((dom-by-class td "ToEx")
          `(:to-eg ,(dom-texts td)))
         ((dom-by-class td "FrEx")

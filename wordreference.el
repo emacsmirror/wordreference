@@ -445,19 +445,23 @@ TRS is the list of table rows from the parsed HTML."
       (while (string-match
               ;; ( + zero or more SPC + any number of non-SPC
               ;; + zero or more SPC + ):
-              ;; this doesn't handle multi words:
+              ;; doesn't handle multi words:
               ;; "([[:blank:]]+?\\([^[:blank:]]+\\)[[:blank:]]*)"
 
               ;; NEED to handle:
-              ;; -- multi words in between
+              ;; -- multi words/spaces in between
               ;; -- zero or more space(s) at each end
               ;; -- but not zero at BOTH ends, otherwise everything matches
 
-              ;; cd do two runs on the one string?
-
-              ;; for now this only handles spaces at both ends:
+              ;; only handles spaces at both ends:
               ;; ( + one or more SPC + any chars in SPC + one or more SPC + )
               ;; "([[:blank:]]+\\(.*\\)[[:blank:]]+)"
+
+              ;; alternative mega regex handles both:
+              ;; "\\(([[:blank:]]+\\(.*[[:alnum:]$]\\)[[:blank:]]?)\\|(\\(.*?\\)[[:blank:]]+)\\)"
+              ;; but this means sometimes we need to use \\2 and sometimes \\3 in replace-match
+
+              ;; let's just run it twice for beg and end brackets:
 
               ;; ( + one or more SPC + anything + )
               "([[:blank:]]+\\(.*\\))"
@@ -465,7 +469,6 @@ TRS is the list of table rows from the parsed HTML."
         (setq result (replace-match
                       "(\\1)"
                       t nil result))))
-    ;; (save-match-data
     (while (string-match
             ;; ( + anything + one or more SPC + )
               "(\\(.*\\)[[:blank:]]+)"

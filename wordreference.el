@@ -588,14 +588,15 @@ and target term, or an example sentence."
            " "))
         (propertize (or source-pos
                         "")
-                    'face font-lock-comment-face)
+                    'face font-lock-comment-face
+                    'help-echo (plist-get source :tooltip))
         " "
         (when register
           (concat
            (propertize register
                        'face '(:inherit font-lock-comment-face
                                         :slant italic))
-                  " "))
+           " "))
         (when source-sense
           (propertize source-sense
                       'face '(:inherit font-lock-comment-face
@@ -618,7 +619,8 @@ and target term, or an example sentence."
         " "
         (propertize (or target-pos
                         "")
-                    'face font-lock-comment-face)
+                    'face font-lock-comment-face
+                    'help-echo (plist-get target :tooltip))
         (when target-sense
           (concat " "
                   (propertize target-sense

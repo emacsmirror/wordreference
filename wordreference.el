@@ -854,7 +854,7 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
                       (format "/%s%s/"
                               wordreference-source-lang
                               wordreference-target-lang)))
-         (word (plist-get wordreference-results-info 'term))
+         (word (wordreference-get-results-info-item 'term))
          (search-url (concat url word))
          (browse-url-browser-function (or wordreference-browse-url-function
                                           (when (browse-url-can-use-xdg-open)
@@ -866,16 +866,16 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
 (defun wordreference-copy-search-term ()
   "Copy current search term to the kill ring."
   (interactive)
-  (let ((term (plist-get wordreference-results-info 'term)))
+  (let ((term (wordreference-get-results-info-item 'term)))
     (kill-new term)
     (message (concat "\"" term "\" copied to clipboard."))))
 
 (defun wordreference-switch-source-target-and-search ()
   "Search for same term with source and target reversed."
   (interactive)
-  (let ((target (plist-get wordreference-results-info 'source))
-        (source (plist-get wordreference-results-info 'target))
-        (term (plist-get wordreference-results-info 'term)))
+  (let ((target (wordreference-get-results-info-item 'source))
+        (source (wordreference-get-results-info-item 'target))
+        (term (wordreference-get-results-info-item 'term)))
     (wordreference-search nil term source target)))
 
 (defun wordreference-nearby-entries-search ()
@@ -893,7 +893,7 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
 \nUses the dictionary specified in `wordreference-helm-dictionary-name'."
   (interactive)
   (let ((query (concat "\\b"
-                       (plist-get wordreference-results-info 'term)
+                       (wordreference-get-results-info-item 'term)
                        "\\b")))
     (helm-dictionary wordreference-helm-dictionary-name query t)))
 
@@ -901,14 +901,14 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
   "Search for the same term on https://www.cntrl.fr."
   ;;TODO: handle multi-term queries better
   (interactive)
-  (let ((query (plist-get wordreference-results-info 'term)))
+  (let ((query (wordreference-get-results-info-item 'term)))
     (browse-url-generic (concat "https://www.cnrtl.fr/definition/"
                                 query))))
 
 (defun wordreference-browse-term-linguee ()
   "Search for current term in browser with Linguee.com."
   (interactive)
-  (let* ((query (plist-get wordreference-results-info 'term))
+  (let* ((query (wordreference-get-results-info-item 'term))
          (query-split (split-string query " "))
          (query-final (if (not (> (length query-split) 1))
                           query

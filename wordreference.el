@@ -114,8 +114,9 @@ It must match the key of one of the dictionaries in `helm-dictionary-database'."
   "Base wordreference URL.")
 
 (defvar-local wordreference-results-info nil
-  "Information about the current results from a word reference search.
-Used to store search term for `wordreference-leo-browse-url-results'.")
+  "A plist about the current results of a word reference search.
+\nUsed to store search term and language pair info from `wordreference-languages-server-list'.
+\nIts form is like this: \"(term \"word\" langs-full \"English-French\" source-full \"English\" target-full \"French\" source-target \"enfr\" source \"en\" target \"fr\")\"")
 
 (defvar-local wordreference-nearby-entries nil)
 

@@ -408,11 +408,12 @@ SOURCE and TARGET are languages."
                            source-lang
                            target-lang)
                    'face font-lock-comment-face))
-      (let ((term-list `(term ,word)))
+      ;; (let ((term-list
         (setq-local wordreference-results-info
-                    (nconc term-list
-                           (wordreference--fetch-lang-info-from-abbrev
-                            source-lang target-lang))))
+                    (nconc ;term-list
+                     `(term ,word);))
+                     (wordreference--fetch-lang-info-from-abbrev
+                      source-lang target-lang)))
       (setq-local wordreference-nearby-entries
                   (wordreference--get-nearby-entries html-parsed))
       (wordreference--make-buttons)

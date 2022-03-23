@@ -948,6 +948,8 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
 \nThe information is returned from `wordreference-languages-server-list'."
   (let* ((lang-pairs-abbrev (concat source target))
          langs-match)
+    (when (not wordreference-languages-server-list)
+      (setq wordreference-languages-server-list (wordreference--get-supported-lang-pairs)))
     (mapc (lambda (x)
             (when (string-equal (plist-get x 'source-target)
                                 lang-pairs-abbrev)

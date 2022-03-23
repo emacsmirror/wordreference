@@ -13,7 +13,8 @@ In the results buffer:
 - =w= or =s= to start a new search (mark any word first to search it by default) with the same language pair as last search.
 - =<tab>= / =<backtab>= to move point backward and forward between entries.
 -  =<return>= when on an entry to do a new search for that entry. If the entry contains multiple results, you are prompted to select one with =completing-read=.
-- [ =C-= ] =<return>= to open a conjugation table or forum entry [in external browser]
+- =click= on a word in an entry to search for just that single word.
+- =<return>= to open a conjugation table or forum entry in external browser
 - =,= / =.= to go to the previous/next heading
 - =b= to view page in external browser
 - =C= to copy current search term

@@ -147,8 +147,8 @@ It must match the key of one of the dictionaries in `helm-dictionary-database'."
 
 (defvar wordreference-link-map
   (let ((map (make-sparse-keymap)))
-    (define-key map [mouse-2] #'shr-browse-url)
-    (define-key map (kbd "RET") #'shr-browse-url)
+    (define-key map [mouse-2] #'wordreference-shr-browse-url-secondary)
+    (define-key map (kbd "RET") #'wordreference-shr-browse-url-secondary)
     map))
 
 
@@ -846,6 +846,16 @@ Used by `wordreference--return-search-word'."
            match
            t nil entry))
       entry))) ; else do nothing
+
+(defun wordreference-shr-browse-url-secondary ()
+  "Browse URL link at point using `browse-url-secondary-browser-function'.
+\nI.e. usually an external browser. Used by
+`wordreference-link-map' to mandate external browser for those
+types of links, as `shr-browse-url' only uses one when called
+with a prefix arguemnt."
+  (interactive)
+  (let ((browse-url-browser-function browse-url-secondary-browser-function))
+    (shr-browse-url)))
 
 (defun wordreference-browse-url-results ()
   "Open the current results in external browser.

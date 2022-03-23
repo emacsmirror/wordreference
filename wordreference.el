@@ -141,7 +141,7 @@ It must match the key of one of the dictionaries in `helm-dictionary-database'."
 
 (defvar wordreference-result-search-map
   (let ((map (make-sparse-keymap)))
-    ;; (define-key map [mouse-2] #'wordreference--click-search-word)
+    (define-key map [mouse-2] #'wordreference-click-search-word)
     (define-key map (kbd "RET") #'wordreference--return-search-word)
     map))
 
@@ -618,12 +618,7 @@ and target term, or an example sentence."
                     'face font-lock-comment-face)
         (when target-term
           (wordreference-unpropertize-source-phrase-in-target
-           (propertize target-term
-                       'button t
-                       'type 'target
-                       'keymap wordreference-result-search-map
-                       'help-echo "RET to search wordreference for this term"
-                       'face 'warning)))
+           (wordreference-propertize-result-term target-term)))
         (when target-conj
           (concat
            " "
@@ -644,9 +639,11 @@ and target term, or an example sentence."
   (propertize
    term
    'button t
+   'follow-link t
+   'mouse-face 'highlight
    'type 'source
    'keymap wordreference-result-search-map
-   'help-echo "RET to search wordreference for this term"
+   'help-echo "RET: search for full result, click: search for single term"
    'face 'warning))
 
 (defun wordreference--propertize-conjunction-link (term conj)
@@ -816,6 +813,20 @@ Word or phrase at point is determined by button text property."
                          (wordreference-get-results-info-item 'target)
                        (wordreference-get-results-info-item 'source))))
     (wordreference-search nil text text-lang other-lang)))
+
+(defun wordreference-click-search-word (_event)
+  "Translate word on mouse click EVENT."
+  (interactive "e")
+  (let ((source (or (wordreference-get-results-info-item 'source) ;stored lang choice
+                    wordreference-source-lang)) ;fallback
+        (target (or (wordreference-get-results-info-item 'target) ;stored lang choice
+                    wordreference-target-lang))) ;fallback
+    (wordreference-search nil (word-at-point)
+                          ;; (get-text-property
+                           ;; (posn-point (event-end event))
+                           ;; 'term)
+                          source
+                          target)))
 
 (defun wordreference-cull-brackets-from-entry-list (entries)
   "Cull any [bracketed] parts of a results in ENTRIES."

@@ -105,7 +105,8 @@ It must match the key of one of the dictionaries in `helm-dictionary-database'."
   "List of all wordreference languages.")
 
 (defvar wordreference-languages-server-list
-  (wordreference--get-supported-lang-pairs)
+  nil
+  ;;(wordreference--get-supported-lang-pairs)
   "The list of supported languges fetched from the server.")
 
 (defvar wordreference-base-url

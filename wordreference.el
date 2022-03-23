@@ -921,7 +921,8 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
     (helm-dictionary wordreference-helm-dictionary-name query t)))
 
 (defun wordreference-browse-term-cntrl ()
-  "Search for the same term on https://www.cntrl.fr."
+  "Search for the same term on https://www.cntrl.fr.
+Really only works for single French terms."
   ;;TODO: handle multi-term queries better
   (interactive)
   (let ((query (wordreference-get-results-info-item 'term)))

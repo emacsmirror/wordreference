@@ -606,14 +606,10 @@ and target term, or an example sentence."
         " "
         (when register
           (concat
-           (propertize register
-                       'face '(:inherit font-lock-comment-face
-                                        :slant italic))
+           (wordreference--propertize-register-or-sense register)
            " "))
         (when source-sense
-          (propertize source-sense
-                      'face '(:inherit font-lock-comment-face
-                                       :slant italic)))
+          (wordreference--propertize-register-or-sense source-sense))
         "\n           "
         (propertize "--> "
                     'face font-lock-comment-face)
@@ -631,9 +627,13 @@ and target term, or an example sentence."
                     'help-echo (plist-get target :tooltip))
         (when target-sense
           (concat " "
-                  (propertize target-sense
-                              'face '(:inherit font-lock-comment-face
-                                               :slant italic))))))))))
+                  (wordreference--propertize-register-or-sense target-sense)))))))))
+
+(defun wordreference--propertize-register-or-sense (str)
+  "Propertize STR as comment and italic."
+  (propertize str
+              'face '(:inherit font-lock-comment-face
+                               :slant italic)))
 
 (defun wordreference-propertize-result-term (term)
   "Propertize result TERM in results buffer."

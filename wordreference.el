@@ -406,12 +406,11 @@ SOURCE and TARGET are languages."
                            source-lang
                            target-lang)
                    'face font-lock-comment-face))
-      (setq-local wordreference-results-info
-                  `(term ,word
-                         source ,source-lang
-                         target ,target-lang
-                         langs-info ,(wordreference--fetch-lang-info-from-abbrev
-                                      source-lang target-lang)))
+      (let ((term-list `(term ,word)))
+        (setq-local wordreference-results-info
+                    (nconc term-list
+                           (wordreference--fetch-lang-info-from-abbrev
+                            source-lang target-lang))))
       (setq-local wordreference-nearby-entries
                   (wordreference--get-nearby-entries html-parsed))
       (wordreference--make-buttons)
@@ -913,9 +912,8 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
          (query-final (if (not (> (length query-split) 1))
                           query
                         (string-join query-split "+")))
-         (lang-pair-full (downcase (plist-get
-                                    (plist-get wordreference-results-info 'langs-info)
-                                              'langs-full))))
+         (lang-pair-full
+          (downcase (wordreference-get-results-info-item 'langs-full))))
     (browse-url-generic (concat
                          "https://www.linguee.com/"
                          lang-pair-full
@@ -924,7 +922,7 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
 
 (defun wordreference--fetch-lang-info-from-abbrev (source target)
   "Use two-letter SOURCE and TARGET abbrevs to collect full language pair.
-The list is returned from `wordreference-languages-server-list'."
+\nThe information is returned from `wordreference-languages-server-list'."
   (let* ((lang-pairs-abbrev (concat source target))
          langs-match)
     (mapc (lambda (x)

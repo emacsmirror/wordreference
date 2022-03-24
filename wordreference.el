@@ -40,6 +40,8 @@
 (require 'browse-url)
 (require 'thingatpt)
 (require 'text-property-search)
+(eval-when-compile
+  (require 'cl-lib))
 
 (when (require 'pdf-tools nil :no-error)
   (declare-function pdf-view-active-region-text "pdf-view"))
@@ -923,7 +925,7 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
 (defun wordreference-browse-term-cntrl ()
   "Search for the same term on https://www.cntrl.fr.
 Really only works for single French terms."
-  ;;TODO: handle multi-term queries better
+  ;; TODO: handle multi-term queries better
   (interactive)
   (let ((query (wordreference-get-results-info-item 'term)))
     (browse-url-generic (concat "https://www.cnrtl.fr/definition/"
@@ -948,16 +950,14 @@ Really only works for single French terms."
 (defun wordreference--fetch-lang-info-from-abbrev (source target)
   "Use two-letter SOURCE and TARGET abbrevs to collect full language pair.
 \nThe information is returned from `wordreference-languages-server-list'."
-  (let* ((lang-pairs-abbrev (concat source target))
-         langs-match)
+  (let* ((lang-pairs-abbrev (concat source target)))
     (when (not wordreference-languages-server-list)
       (setq wordreference-languages-server-list (wordreference--get-supported-lang-pairs)))
-    (mapc (lambda (x)
-            (when (string-equal (plist-get x 'source-target)
-                                lang-pairs-abbrev)
-              (push x langs-match)))
-          wordreference-languages-server-list)
-    (car langs-match)))
+    (cl-dolist (lang-info-list wordreference-languages-server-list)
+      ;; break as soon as we match and return full list item:
+      (when (string= (plist-get lang-info-list 'source-target)
+                     lang-pairs-abbrev)
+        (cl-return lang-info-list)))))
 
 
 ;;;###autoload

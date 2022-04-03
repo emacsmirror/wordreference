@@ -155,15 +155,18 @@ It must match the key of one of the dictionaries in `helm-dictionary-database'."
 
 ;; REQUESTING AND PARSING
 
+(defun wordreference--parse-html-buffer (html-buffer)
+  "Parse the HTML-BUFFER response."
+  (with-current-buffer html-buffer
+    (goto-char (point-min))
+    (libxml-parse-html-region
+     (search-forward "\n\n") (point-max))))
+
 (defun wordreference--get-supported-lang-pairs ()
   "Query wordreference.com for supported language pairs."
   (let* ((html-buffer (url-retrieve-synchronously
                        wordreference-base-url))
-         (html-parsed
-          (with-current-buffer html-buffer
-            (goto-char (point-min))
-            (libxml-parse-html-region
-             (search-forward "\n\n") (point-max))))
+         (html-parsed (wordreference--parse-html-buffer html-buffer))
          (langs (dom-by-tag
                  (dom-by-class html-parsed "custom-select")
                  'option)))
@@ -189,16 +192,20 @@ The elements are formatted as follows: \"Spanish-English\" \"esen\" \"es\" \"en\
      'target (substring (dom-attr lang 'id)
                         2 4))))
 
+(defun wordreference--construct-url (source target word)
+  "Construct query URL for WORD from SOURCE to TARGET."
+  (concat wordreference-base-url
+          (format "/%s%s/%s"
+                  (or source
+                      wordreference-source-lang)
+                  (or target
+                      wordreference-target-lang)
+                  word)))
+
 (defun wordreference--retrieve-parse-html (word &optional source target)
   "Query wordreference.com for WORD, and parse the HTML response.
 Optionally specify SOURCE and TARGET languages."
-  (let* ((url (concat wordreference-base-url
-                      (format "/%s%s/%s"
-                              (or source
-                                  wordreference-source-lang)
-                              (or target
-                                  wordreference-target-lang)
-                              word)))
+  (let* ((url (wordreference--construct-url source target word))
 	     (html-buffer (url-retrieve-synchronously url)))
     (with-current-buffer html-buffer
       (goto-char (point-min))
@@ -294,6 +301,30 @@ followed by a list of textual results returned by
                          (dom-by-class dom "tooltip")
                          'span))))
 
+(defun wordreference-build-to-fr-td (td)
+  "Build a TD when it is of type FrWrd or ToWrd."
+  (let* ((to-or-from (if (dom-by-class td "ToWrd")
+                         :to
+                       :from))
+         (em (dom-by-class td "POS2"))
+         (pos (dom-text em))
+         (tooltip (dom-by-tag em 'span))
+         (tooltip-text (dom-texts tooltip))
+         (term-text
+          (if (dom-by-class td "FrWrd")
+              (dom-texts (dom-by-tag td 'strong))
+            (dom-text td)))
+         (conj (dom-by-class td "conjugate"))
+         (conj-link-suffix (dom-attr conj 'href))
+         (usage-list (dom-by-class td "engusg"))
+         (usage (dom-attr (car (dom-by-tag usage-list 'a))
+                          'href)))
+    `(,to-or-from ,term-text
+                  :pos ,pos
+                  :tooltip ,tooltip-text
+                  :conj ,conj-link-suffix
+                  :usage ,usage)))
+
 (defun wordreference-build-single-td-list (td)
   "Return textual result for a single TD.
 \nReturns a property list containing to or from term, position of
@@ -301,27 +332,7 @@ speech, tooltip info, and conjunction table for a result, an
 example for an example, and other for everything else."
   (cond ((or (dom-by-class td "ToWrd")
              (dom-by-class td "FrWrd"))
-         (let* ((to-or-from (if (dom-by-class td "ToWrd")
-                                :to
-                              :from))
-                (em (dom-by-class td "POS2"))
-                (pos (dom-text em))
-                (tooltip (dom-by-tag em 'span))
-                (tooltip-text (dom-texts tooltip))
-                (term-text
-                 (if (dom-by-class td "FrWrd")
-                     (dom-texts (dom-by-tag td 'strong))
-                   (dom-text td)))
-                (conj (dom-by-class td "conjugate"))
-                (conj-link-suffix (dom-attr conj 'href))
-                (usage-list (dom-by-class td "engusg"))
-                (usage (dom-attr (car (dom-by-tag usage-list 'a))
-                                 'href)))
-           `(,to-or-from ,term-text
-                         :pos ,pos
-                         :tooltip ,tooltip-text
-                         :conj ,conj-link-suffix
-                         :usage ,usage)))
+         (wordreference-build-to-fr-td td))
         ((dom-by-class td "ToEx")
          (wordreference-build-example td "ToEx"))
         ((dom-by-class td "FrEx")
@@ -367,8 +378,7 @@ SOURCE and TARGET are languages."
            (post-article (dom-by-id html-parsed "postArticle"))
            (forum-heading (dom-by-id post-article "threadsHeader"))
            (forum-heading-string (dom-texts forum-heading))
-           (forum-links (dom-children
-                         (dom-by-id post-article "lista_link")))
+           (forum-links (dom-children (dom-by-id post-article "lista_link")))
            (forum-links-propertized
             (wordreference-process-forum-links forum-links))
            (source-lang (or (plist-get (car pr-trs-results-list) :source)
@@ -394,7 +404,7 @@ SOURCE and TARGET are languages."
       (if (not word-tables)
           (insert "looks like wordreference returned nada.\n\nHit 'S' to search again with languages reversed.\n\n")
         (wordreference-print-tables word-tables))
-      ;; print list of term aslso found in these entries
+      ;; print list of term also found in these entries
       (wordreference-print-also-found-entries html-parsed)
       ;; print forums
       (wordreference-print-heading forum-heading-string)
@@ -409,10 +419,9 @@ SOURCE and TARGET are languages."
                            source-lang
                            target-lang)
                    'face font-lock-comment-face))
-      ;; (let ((term-list
       (setq-local wordreference-results-info
-                  (nconc ;term-list
-                   `(term ,word);))
+                  (nconc
+                   `(term ,word)
                    (wordreference--fetch-lang-info-from-abbrev
                     source-lang target-lang)))
       (setq-local wordreference-nearby-entries
@@ -734,14 +743,17 @@ HTML is what our original query returned."
 
 ;; BUFFER, NAVIGATION etc.
 
-(defun wordreference-next-heading ()
-  "Move point to next heading."
+(defun wordreference-next-heading (&optional prev)
+  "Move point to next heading, or to PREV heading if given."
   (interactive)
   (save-match-data
     (let ((match
            (save-excursion
-             (text-property-search-forward 'heading ;NB 27.1!
-                                           t t t))))
+             (if prev
+                 (text-property-search-backward 'heading ;NB 27.1!
+                                                t t t)
+               (text-property-search-forward 'heading ;NB 27.1!
+                                             t t t)))))
       (if match
           (progn
             (goto-char (prop-match-beginning match))
@@ -751,16 +763,7 @@ HTML is what our original query returned."
 (defun wordreference-previous-heading ()
   "Move point to previous heading."
   (interactive)
-  (save-match-data
-    (let ((match
-           (save-excursion
-             (text-property-search-backward 'heading ;NB 27.1!
-                                            t t t))))
-      (if match
-          (progn
-            (goto-char (prop-match-beginning match))
-            (recenter-top-bottom 3))
-        (message "No more headings.")))))
+  (wordreference-next-heading :prev))
 
 (defun wordreference--make-buttons ()
   "Make all property ranges with button property into buttons."
@@ -777,24 +780,28 @@ HTML is what our original query returned."
   "Get ITEM from `wordreference-results-info'."
   (plist-get wordreference-results-info item))
 
+(defun wordreference--get-result-entry ()
+  "Get result entry near point."
+  (wordreference-cull-brackets-from-entry
+   (buffer-substring-no-properties
+    (progn (if (looking-back "[ \t\n]" nil) ; enter range if we tabbed here
+               (forward-char))
+           (previous-single-property-change (point) 'button)) ; range start
+    (next-single-property-change (point) 'button))))
+
 (defun wordreference--return-search-word ()
   "Translate result word or phrase at point.
 Word or phrase at point is determined by button text property."
   (interactive)
-  (let* ((result-entry
-          (wordreference-cull-brackets-from-entry
-           (buffer-substring-no-properties
-            (progn
-              (if (looking-back "[ \t\n]" nil) ; enter range if we tabbed here
-                  (forward-char))
-              (previous-single-property-change (point) 'button)) ; range start
-            (next-single-property-change (point) 'button))))
-         ;; handle calling this on a multi-term result:
+  (let* ((result-entry (wordreference--get-result-entry))
+         ;; handle multi-term results:
          (text (let ((results
                       (wordreference-cull-brackets-from-entry-list
                        (split-string result-entry "[,;] "))))
                  (if (< 1 (length results))
-                     (completing-read "Select or enter search term: " results nil nil nil nil (car results))
+                     (completing-read "Select or enter search term: "
+                                      results nil nil nil nil
+                                      (car results))
                    result-entry)))
          (text-type (get-text-property (point) 'type))
          (text-lang (if (equal text-type 'source)
@@ -813,9 +820,6 @@ Word or phrase at point is determined by button text property."
         (target (or (wordreference-get-results-info-item 'target) ;stored lang choice
                     wordreference-target-lang))) ;fallback
     (wordreference-search nil (word-at-point)
-                          ;; (get-text-property
-                          ;; (posn-point (event-end event))
-                          ;; 'term)
                           source
                           target)))
 
@@ -829,9 +833,10 @@ Word or phrase at point is determined by button text property."
   "Cull any [bracketed] parts of a result ENTRY.
 Used by `wordreference--return-search-word'."
   (save-match-data
-    (while (string-match " \\(\\+ \\)?\\[.*?\\]"
-                         ;; SPC + possible "+" + [anything], lazy match
-                         entry )
+    (while (string-match
+            ;; SPC + possible "+" + [anything], lazy match
+            " \\(\\+ \\)?\\[.*?\\]"
+            entry)
       (setq entry (replace-match
                    ""
                    t nil entry))))
@@ -840,9 +845,10 @@ Used by `wordreference--return-search-word'."
 (defun wordreference-unpropertize-source-phrase-in-target (entry)
   "Remove properties from any source phrase in ENTRY."
   (save-match-data
-    (if (string-match ".* :"
-                      ;; any chars + SPC + :
-                      entry)
+    (if (string-match
+         ;; any chars + SPC + :
+         ".* :"
+         entry)
         (let ((match (match-string-no-properties 0 entry)))
           (replace-match
            match
@@ -940,27 +946,36 @@ Really only works for single French terms."
 \nThe information is returned from `wordreference-languages-server-list'."
   (let* ((lang-pairs-abbrev (concat source target)))
     (when (not wordreference-languages-server-list)
-      (setq wordreference-languages-server-list (wordreference--get-supported-lang-pairs)))
+      (setq wordreference-languages-server-list
+            (wordreference--get-supported-lang-pairs)))
     (seq-find (lambda (plist)
                 (string= lang-pairs-abbrev
                          (plist-get plist 'source-target)))
               wordreference-languages-server-list)))
 
 
+(defun wordreference--get-region ()
+  "Get current region for new search."
+  (if (and (equal major-mode 'pdf-view-mode)
+           (region-active-p))
+      (car (pdf-view-active-region-text))
+    (when (use-region-p)
+      (buffer-substring-no-properties (region-beginning)
+                                      (region-end)))))
+
 ;;;###autoload
 (defun wordreference-search (&optional prefix word source target)
   "Search wordreference for region, `word-at-point', or user input.
 Optionally specify WORD, SOURCE and TARGET languages.
 With a PREFIX arg, prompt for source and target language pair."
   (interactive "P")
-  (let* ((source (or source ;from lisp
-                     (if prefix ;prefix arg
+  (let* ((source (or source             ;from lisp
+                     (if prefix         ;prefix arg
                          (completing-read "From source: "
                                           wordreference-languages-full
                                           nil
                                           t)
-                       (or
-                        ;; prev search
+                       (or ;; prev search
                         (wordreference-get-results-info-item 'source)
                         wordreference-source-lang)))) ; fallback
          (target (or target
@@ -971,12 +986,7 @@ With a PREFIX arg, prompt for source and target language pair."
                                           t)
                        (or (wordreference-get-results-info-item 'target)
                            wordreference-target-lang))))
-         (region (if (and (equal major-mode 'pdf-view-mode)
-                          (region-active-p))
-                     (car (pdf-view-active-region-text))
-                   (when (use-region-p)
-                     (buffer-substring-no-properties (region-beginning)
-                                                     (region-end)))))
+         (region (wordreference--get-region))
          (word (or word
                    (read-string (format "Wordreference search (%s): "
                                         (or region (current-word) ""))

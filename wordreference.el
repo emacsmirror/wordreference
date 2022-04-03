@@ -3,7 +3,7 @@
 ;; Author: Marty Hiatt <martianhiatus AT riseup.net>
 ;; Copyright (C) 2022 Marty Hiatt <martianhiatus AT riseup.net>
 ;;
-;; Package-Requires: ((emacs "27.1"))
+;; Package-Requires: ((emacs "27.1") (s "1.12.0"))
 ;; Keywords: convenience, translate
 ;; URL: https://codeberg.org/martianh/wordreference
 ;; Version: 0.2
@@ -34,14 +34,13 @@
 ;; nb: wr requires a user agent to return a request
 
 ;;; Code:
+(require 's)
 (require 'xml)
 (require 'dom)
 (require 'shr)
 (require 'browse-url)
 (require 'thingatpt)
 (require 'text-property-search)
-(eval-when-compile
-  (require 'cl-lib))
 
 (when (require 'pdf-tools nil :no-error)
   (declare-function pdf-view-active-region-text "pdf-view"))
@@ -174,7 +173,7 @@ It must match the key of one of the dictionaries in `helm-dictionary-database'."
   "Return a nested list containing infomation about supported language pairs LANGS."
   (mapcar (lambda (x)
             (wordreference-get-lang-elements x))
-            langs))
+          langs))
 
 (defun wordreference-get-lang-elements (lang)
   "Return a list containing information about a supported language pair LANG.
@@ -411,11 +410,11 @@ SOURCE and TARGET are languages."
                            target-lang)
                    'face font-lock-comment-face))
       ;; (let ((term-list
-        (setq-local wordreference-results-info
-                    (nconc ;term-list
-                     `(term ,word);))
-                     (wordreference--fetch-lang-info-from-abbrev
-                      source-lang target-lang)))
+      (setq-local wordreference-results-info
+                  (nconc ;term-list
+                   `(term ,word);))
+                   (wordreference--fetch-lang-info-from-abbrev
+                    source-lang target-lang)))
       (setq-local wordreference-nearby-entries
                   (wordreference--get-nearby-entries html-parsed))
       (wordreference--make-buttons)
@@ -480,17 +479,6 @@ TRS is the list of table rows from the parsed HTML."
         defs)
   (insert "\n"))
 
-(defun wordreference--cull-double-spaces (result)
-  "Remove any double spaces from RESULT."
-  (when result
-    (save-match-data
-      (while (string-match "[[:blank:]]\\{2\\}"
-                           result)
-        (setq result (replace-match
-                      " "
-                      t nil result))))
-    result))
-
 (defun wordreference--cull-conj-arrows (result)
   "Remove any conjugation arrows from RESULT."
   (when result
@@ -535,7 +523,7 @@ TRS is the list of table rows from the parsed HTML."
   "Remove unwanted characters from a context/sense string STR."
   (when str
     (string-trim
-     (wordreference--cull-double-spaces
+     (s-collapse-whitespace
       (wordreference--cull-single-spaces-in-brackets
        (wordreference--cull-space-between-brackets
         str)))
@@ -551,7 +539,7 @@ and target term, or an example sentence."
                                     (plist-get source :repeat))) ; repeat term
          (source-term (when source-term-untrimmed
                         (wordreference--cull-conj-arrows
-                         (wordreference--cull-double-spaces
+                         (s-collapse-whitespace
                           (string-trim source-term-untrimmed)))))
          (source-pos (plist-get source :pos))
          (source-conj (plist-get source :conj))
@@ -564,7 +552,7 @@ and target term, or an example sentence."
 
          (target (caddr def))
          (target-term
-          (when target (wordreference--cull-double-spaces
+          (when target (s-collapse-whitespace
                         (string-trim
                          (plist-get target :to)))))
          (target-pos (plist-get target :pos))
@@ -826,8 +814,8 @@ Word or phrase at point is determined by button text property."
                     wordreference-target-lang))) ;fallback
     (wordreference-search nil (word-at-point)
                           ;; (get-text-property
-                           ;; (posn-point (event-end event))
-                           ;; 'term)
+                          ;; (posn-point (event-end event))
+                          ;; 'term)
                           source
                           target)))
 
@@ -953,11 +941,10 @@ Really only works for single French terms."
   (let* ((lang-pairs-abbrev (concat source target)))
     (when (not wordreference-languages-server-list)
       (setq wordreference-languages-server-list (wordreference--get-supported-lang-pairs)))
-    (cl-dolist (lang-info-list wordreference-languages-server-list)
-      ;; break as soon as we match and return full list item:
-      (when (string= (plist-get lang-info-list 'source-target)
-                     lang-pairs-abbrev)
-        (cl-return lang-info-list)))))
+    (seq-find (lambda (plist)
+                (string= lang-pairs-abbrev
+                         (plist-get plist 'source-target)))
+              wordreference-languages-server-list)))
 
 
 ;;;###autoload

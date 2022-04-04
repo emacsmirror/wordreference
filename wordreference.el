@@ -301,6 +301,20 @@ followed by a list of textual results returned by
                          (dom-by-class dom "tooltip")
                          'span))))
 
+(defun wordreference--process-term-text-list (td)
+  "Process the terms in TD as a list split on commas or semicolons."
+  (let ((text-string-split (split-string
+                            (if (dom-by-class td "FrWrd")
+                                (dom-texts (dom-by-tag td 'strong))
+                              (dom-text td))
+                            "[,;] ")))
+    (mapcar (lambda (x)
+              (when x
+                (wordreference--cull-conj-arrows
+                 (s-collapse-whitespace
+                  (string-trim x)))))
+            text-string-split)))
+
 (defun wordreference-build-to-fr-td (td)
   "Build a TD when it is of type FrWrd or ToWrd."
   (let* ((to-or-from (if (dom-by-class td "ToWrd")
@@ -310,20 +324,23 @@ followed by a list of textual results returned by
          (pos (dom-text em))
          (tooltip (dom-by-tag em 'span))
          (tooltip-text (dom-texts tooltip))
-         (term-text
-          (if (dom-by-class td "FrWrd")
-              (dom-texts (dom-by-tag td 'strong))
-            (dom-text td)))
-         (conj (dom-by-class td "conjugate"))
-         (conj-link-suffix (dom-attr conj 'href))
+         (term-text-list (wordreference--process-term-text-list td))
+         (conj-list (or (dom-by-class td "conjugate")
+                        '(("dummy"))))
+         (conj-list-links (mapcar (lambda (x)
+                                    (or (dom-attr x 'href)
+                                        ""))
+                                  conj-list))
+         (term-conj-list
+          (cl-mapcar
+           #'list
+           term-text-list conj-list-links))
          (usage-list (dom-by-class td "engusg"))
          (usage (dom-attr (car (dom-by-tag usage-list 'a))
                           'href)))
-    `(,to-or-from ,term-text
+    `(,to-or-from ,term-conj-list
                   :pos ,pos
-                  :tooltip ,tooltip-text
-                  :conj ,conj-link-suffix
-                  :usage ,usage)))
+                  :tooltip ,tooltip-text)))
 
 (defun wordreference-build-single-td-list (td)
   "Return textual result for a single TD.
@@ -544,12 +561,8 @@ TRS is the list of table rows from the parsed HTML."
 \nFor now a definition can be a set of source term, context term,
 and target term, or an example sentence."
   (let* ((source (car def))
-         (source-term-untrimmed (or (plist-get source :from) ; new term
-                                    (plist-get source :repeat))) ; repeat term
-         (source-term (when source-term-untrimmed
-                        (wordreference--cull-conj-arrows
-                         (s-collapse-whitespace
-                          (string-trim source-term-untrimmed)))))
+         (source-terms (or (plist-get source :from) ; new term
+                           (plist-get source :repeat))) ; repeat term
          (source-pos (plist-get source :pos))
          (source-conj (plist-get source :conj))
 
@@ -560,12 +573,9 @@ and target term, or an example sentence."
                         (plist-get (cadr def) :to-sense)))
 
          (target (caddr def))
-         (target-term
-          (when target (s-collapse-whitespace
-                        (string-trim
-                         (plist-get target :to)))))
+         (target-terms (plist-get target :to))
          (target-pos (plist-get target :pos))
-         (target-conj (plist-get target :conj))
+         ;; (target-conj (plist-get target :conj))
 
          (eg (or (plist-get (cadr def) :to-eg)
                  (plist-get (cadr def) :from-eg)))
@@ -586,13 +596,14 @@ and target term, or an example sentence."
      (t
       (insert
        (concat
-        (when source-term
-          (if (string= source-term "\"\"")
+        (when source-terms
+          (if (and (stringp source-terms)
+                   (string= source-terms "\"\""))
               (propertize "\n\"\"" ;; for repeat terms
                           'face font-lock-comment-face)
             (concat
              "\n\n"
-             (wordreference-propertize-result-term source-term))))
+             (wordreference--insert-terms-and-conj source-terms 'source))))
         " "
         (when source-conj
           (concat
@@ -612,13 +623,9 @@ and target term, or an example sentence."
         "\n           "
         (propertize "--> "
                     'face font-lock-comment-face)
-        (when target-term
+        (when target-terms
           (wordreference-unpropertize-source-phrase-in-target
-           (wordreference-propertize-result-term target-term)))
-        (when target-conj
-          (concat
-           " "
-           (wordreference--propertize-conjunction-link target-term target-conj)))
+           (wordreference--insert-terms-and-conj target-terms 'target)))
         " "
         (propertize (or target-pos
                         "")
@@ -628,20 +635,37 @@ and target term, or an example sentence."
           (concat " "
                   (wordreference--propertize-register-or-sense target-sense)))))))))
 
+(defun wordreference--insert-terms-and-conj (terms source-or-target)
+  "Print a string of TERMS and their conjunction links if any.
+\n SOURCE-OR-TARGET is a symbol to be added as a type property."
+  (mapconcat (lambda (x)
+               (concat
+                (wordreference-propertize-result-term
+                 (car x)
+                 source-or-target)
+                (when (not (string= (cadr x) ""))
+                  (concat " "
+                          (wordreference--propertize-conjunction-link
+                           (car x)
+                           (cadr x))))))
+             terms
+             ", "))
+
 (defun wordreference--propertize-register-or-sense (str)
   "Propertize STR as comment and italic."
   (propertize str
               'face '(:inherit font-lock-comment-face
                                :slant italic)))
 
-(defun wordreference-propertize-result-term (term)
-  "Propertize result TERM in results buffer."
+(defun wordreference-propertize-result-term (term source-or-target)
+  "Propertize result TERM in results buffer.
+\n SOURCE-OR-TARGET is a symbol to be added as a type property."
   (propertize
    term
    'button t
    'follow-link t
    'mouse-face 'highlight
-   'type 'source
+   'type source-or-target
    'keymap wordreference-result-search-map
    'help-echo "RET: search for full result, click: search for single term"
    'face 'warning))

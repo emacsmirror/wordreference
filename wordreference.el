@@ -335,11 +335,13 @@ followed by a list of textual results returned by
           (cl-mapcar
            #'list
            term-text-list conj-list-links))
+         ;;TODO: this is EN hardcoded, are is there usage for other langs?
          (usage-list (dom-by-class td "engusg"))
-         (usage (dom-attr (car (dom-by-tag usage-list 'a))
-                          'href)))
+         (usage-link (dom-attr (car (dom-by-tag usage-list 'a))
+                               'href)))
     `(,to-or-from ,term-conj-list
                   :pos ,pos
+                  :usage ,usage-link
                   :tooltip ,tooltip-text)))
 
 (defun wordreference-build-single-td-list (td)
@@ -561,7 +563,7 @@ TRS is the list of table rows from the parsed HTML."
 \nFor now a definition can be a set of source term, context term,
 and target term, or an example sentence."
   (let* ((source (car def))
-         (source-terms (or (plist-get source :from) ; new term
+         (source-terms (or (plist-get source :from)     ; new term
                            (plist-get source :repeat))) ; repeat term
          (source-pos (plist-get source :pos))
          (source-conj (plist-get source :conj))
@@ -579,7 +581,8 @@ and target term, or an example sentence."
 
          (eg (or (plist-get (cadr def) :to-eg)
                  (plist-get (cadr def) :from-eg)))
-         (note (plist-get source :note)))
+         (note (plist-get source :note))
+         (usage (plist-get source :usage)))
 
     (cond
      (eg
@@ -595,14 +598,17 @@ and target term, or an example sentence."
                            'face '(:height 0.8 :box t)))))
      (t
       (insert
+       "\n\n"
        (concat
+        (when usage
+          (wordreference--propertize-usage-marker usage))
+        " "
         (when source-terms
           (if (and (stringp source-terms)
                    (string= source-terms "\"\""))
               (propertize "\n\"\"" ;; for repeat terms
                           'face font-lock-comment-face)
             (concat
-             "\n\n"
              (wordreference--insert-terms-and-conj source-terms 'source))))
         " "
         (when source-conj
@@ -634,6 +640,19 @@ and target term, or an example sentence."
         (when target-sense
           (concat " "
                   (wordreference--propertize-register-or-sense target-sense)))))))))
+
+(defun wordreference--propertize-usage-marker (usage-url)
+  "Propertize a usage marker for USAGE-URL."
+  (propertize (if (fontp (char-displayable-p #x1f4ac))
+                  "💬"
+                "!!")
+              'face font-lock-comment-face
+              'follow-link t
+              'shr-url (concat wordreference-base-url usage-url)
+              'keymap wordreference-link-map
+              'fontified t
+              'mouse-face 'highlight
+              'help-echo "English usage information available. Click to view."))
 
 (defun wordreference--insert-terms-and-conj (terms source-or-target)
   "Print a string of TERMS and their conjunction links if any.

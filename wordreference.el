@@ -886,7 +886,7 @@ Used by `wordreference--return-search-word'."
   (save-match-data
     (if (string-match
          ;; any chars + SPC + :
-         ".* :"
+         ".* : "
          entry)
         (let ((match (match-string-no-properties 0 entry)))
           (replace-match

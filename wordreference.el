@@ -703,11 +703,14 @@ HTML is what our original query returned."
   (let* ((also-found (dom-by-id html "FTintro"))
          (also-found-heading (string-trim (dom-texts also-found)))
          (also-found-langs (dom-by-class html "FTsource"))
-         (also-found-source (string-trim
-                             (dom-texts (car also-found-langs))))
-         (also-found-target (s-replace " " ""
-                                       (string-trim
-                                        (dom-texts (cdr also-found-langs)))))
+         (also-found-source (s-replace
+                             " " ""
+                             (string-trim
+                              (dom-texts (car also-found-langs)))))
+         (also-found-target (s-replace
+                             " " ""
+                             (string-trim
+                              (dom-texts (cdr also-found-langs)))))
          (also-list (dom-by-class html "FTlist"))
          (also-list-source (dom-by-tag (car also-list) 'a))
          (also-list-target (dom-by-tag (cdr also-list) 'a)))

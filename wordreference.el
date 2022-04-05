@@ -566,24 +566,18 @@ and target term, or an example sentence."
          (source-terms (or (plist-get source :from)     ; new term
                            (plist-get source :repeat))) ; repeat term
          (source-pos (plist-get source :pos))
-         (source-conj (plist-get source :conj))
-
          (source-sense (wordreference--process-sense-string
                         (plist-get (cadr def) :from-sense)))
          (register (plist-get (cadr def) :register))
-         (target-sense (wordreference--process-sense-string
-                        (plist-get (cadr def) :to-sense)))
-
          (target (caddr def))
          (target-terms (plist-get target :to))
+         (target-sense (wordreference--process-sense-string
+                        (plist-get (cadr def) :to-sense)))
          (target-pos (plist-get target :pos))
-         ;; (target-conj (plist-get target :conj))
-
          (eg (or (plist-get (cadr def) :to-eg)
                  (plist-get (cadr def) :from-eg)))
          (note (plist-get source :note))
          (usage (plist-get source :usage)))
-
     (cond
      (eg
       (insert
@@ -598,23 +592,21 @@ and target term, or an example sentence."
                            'face '(:height 0.8 :box t)))))
      (t
       (insert
-       "\n\n"
+       "\n"
        (concat
-        (when usage
-          (wordreference--propertize-usage-marker usage))
         " "
         (when source-terms
           (if (and (stringp source-terms)
                    (string= source-terms "\"\""))
-              (propertize "\n\"\"" ;; for repeat terms
+              (propertize "\"\"" ; for repeat terms
                           'face font-lock-comment-face)
             (concat
-             (wordreference--insert-terms-and-conj source-terms 'source))))
-        " "
-        (when source-conj
-          (concat
-           (wordreference--propertize-conjunction-link source-term source-conj)
-           " "))
+             "\n" ; newline if not a repeat term
+             (when usage
+               (concat (wordreference--propertize-usage-marker usage)
+                       " "))
+             (wordreference--insert-terms-and-conj source-terms 'source)
+             " ")))
         (propertize (or source-pos
                         "")
                     'face font-lock-comment-face

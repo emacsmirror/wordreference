@@ -568,72 +568,73 @@ TRS is the list of table rows from the parsed HTML."
   "Print a single definition DEF in the buffer.
 \nFor now a definition can be a set of source term, context term,
 and target term, or an example sentence."
-  (cond ((setq-local wr-note (plist-get (car def) :note))
-         (insert
-          "\n -- "
-          (propertize wr-note
-                      'face '(:height 0.8 :box t))))
-        ((setq-local wr-eg (or (plist-get (car def) :to-eg)
-                               (plist-get (car def) :from-eg)))
-         (insert
-          "\n -- "
-          (propertize wr-eg
-                      'face '(:height 0.8))))
-        (t
-         (let* ((source (car def))
-                (source-terms (or (plist-get source :from)     ; new term
-                                  (plist-get source :repeat))) ; repeat term
-                (source-pos (plist-get source :pos))
-                (source-sense (wordreference--process-sense-string
-                               (plist-get (cadr def) :from-sense)))
-                (register (plist-get (cadr def) :register))
-                (target (caddr def))
-                (target-terms (plist-get target :to))
-                (target-sense (wordreference--process-sense-string
-                               (plist-get (cadr def) :to-sense)))
-                (target-pos (plist-get target :pos))
-                (usage (plist-get source :usage)))
+  (let (wr-note wr-eg)
+    (cond ((setq wr-note (plist-get (car def) :note))
            (insert
-            "\n"
-            (concat
-             " "
-             (when source-terms
-               (if (and (stringp source-terms)
-                        (string= source-terms "\"\""))
-                   (propertize "\"\"" ; for repeat terms
-                               'face font-lock-comment-face)
+            "\n -- "
+            (propertize wr-note
+                        'face '(:height 0.8 :box t))))
+          ((setq wr-eg (or (plist-get (car def) :to-eg)
+                           (plist-get (car def) :from-eg)))
+           (insert
+            "\n -- "
+            (propertize wr-eg
+                        'face '(:height 0.8))))
+          (t
+           (let* ((source (car def))
+                  (source-terms (or (plist-get source :from)     ; new term
+                                    (plist-get source :repeat))) ; repeat term
+                  (source-pos (plist-get source :pos))
+                  (source-sense (wordreference--process-sense-string
+                                 (plist-get (cadr def) :from-sense)))
+                  (register (plist-get (cadr def) :register))
+                  (target (caddr def))
+                  (target-terms (plist-get target :to))
+                  (target-sense (wordreference--process-sense-string
+                                 (plist-get (cadr def) :to-sense)))
+                  (target-pos (plist-get target :pos))
+                  (usage (plist-get source :usage)))
+             (insert
+              "\n"
+              (concat
+               " "
+               (when source-terms
+                 (if (and (stringp source-terms)
+                          (string= source-terms "\"\""))
+                     (propertize "\"\"" ; for repeat terms
+                                 'face font-lock-comment-face)
+                   (concat
+                    "\n" ; newline if not a repeat term
+                    (when usage
+                      (concat (wordreference--propertize-usage-marker usage)
+                              " "))
+                    (wordreference--insert-terms-and-conj source-terms 'source)
+                    " ")))
+               (propertize (or source-pos
+                               "")
+                           'face font-lock-comment-face
+                           'help-echo (plist-get source :tooltip))
+               " "
+               (when register
                  (concat
-                  "\n" ; newline if not a repeat term
-                  (when usage
-                    (concat (wordreference--propertize-usage-marker usage)
-                            " "))
-                  (wordreference--insert-terms-and-conj source-terms 'source)
-                  " ")))
-             (propertize (or source-pos
-                             "")
-                         'face font-lock-comment-face
-                         'help-echo (plist-get source :tooltip))
-             " "
-             (when register
-               (concat
-                (wordreference--propertize-register-or-sense register)
-                " "))
-             (when source-sense
-               (wordreference--propertize-register-or-sense source-sense))
-             "\n           "
-             (propertize "--> "
-                         'face font-lock-comment-face)
-             (when target-terms
-               (wordreference-unpropertize-source-phrase-in-target
-                (wordreference--insert-terms-and-conj target-terms 'target)))
-             " "
-             (propertize (or target-pos
-                             "")
-                         'face font-lock-comment-face
-                         'help-echo (plist-get target :tooltip))
-             (when target-sense
-               (concat " "
-                       (wordreference--propertize-register-or-sense target-sense)))))))))
+                  (wordreference--propertize-register-or-sense register)
+                  " "))
+               (when source-sense
+                 (wordreference--propertize-register-or-sense source-sense))
+               "\n           "
+               (propertize "--> "
+                           'face font-lock-comment-face)
+               (when target-terms
+                 (wordreference-unpropertize-source-phrase-in-target
+                  (wordreference--insert-terms-and-conj target-terms 'target)))
+               " "
+               (propertize (or target-pos
+                               "")
+                           'face font-lock-comment-face
+                           'help-echo (plist-get target :tooltip))
+               (when target-sense
+                 (concat " "
+                         (wordreference--propertize-register-or-sense target-sense))))))))))
 
 (defun wordreference--propertize-usage-marker (usage-url)
   "Propertize a usage marker for USAGE-URL."

@@ -383,7 +383,7 @@ example for an example, and other for everything else."
          (wordreference-note-create :note (dom-texts td)))
         ;; FIXME: disambig this from an eg:
         ((string= " " (dom-texts td))
-         `(:repeat "\"\""))
+         (wordreference-term-create :term "\"\"" :type 'repeat))
         ;; simple to sense:
         ((dom-by-class td "To2")
          (wordreference-sense-create :to-sense (dom-texts td)))
@@ -585,7 +585,7 @@ TRS is the list of table rows from the parsed HTML."
   "Print a single definition DEF in the buffer.
 \nFor now a definition can be a set of source term, context term,
 and target term, or an example sentence."
-  (let (wr-note wr-eg repeat)
+  (let (wr-note wr-eg)
     (cond ((wordreference-note-p (car def))
            (insert
             "\n -- "
@@ -600,11 +600,9 @@ and target term, or an example sentence."
           (t
            (let* ((source (car def))
                   (source-terms
-                   (or (plist-get source :repeat) ; repeat term
-                       (wordreference-term-term source)))
-                  (source-pos (when (wordreference-term-p source)
-                                (wordreference-term-pos source)))
-                  (source-sense (when (wordreference-term-p source)
+                       (wordreference-term-term source));)
+                  (source-pos (wordreference-term-pos source))
+                  (source-sense (when (wordreference-sense-p (cadr def))
                                   (wordreference--process-sense-string
                                    (wordreference-sense-from-sense (cadr def)))))
                   (register (when (wordreference-sense-p (cadr def))
@@ -615,16 +613,14 @@ and target term, or an example sentence."
                                   (wordreference--process-sense-string
                                    (wordreference-sense-to-sense (cadr def)))))
                   (target-pos (wordreference-term-pos target))
-                  (usage (when (wordreference-term-p source)
-                           (wordreference-term-usage source))))
+                  (usage (wordreference-term-usage source)))
              (insert
               "\n"
               (concat
                " "
                (when source-terms
-                 (if (and (stringp source-terms)
-                          (string= source-terms "\"\""))
-                     (propertize "\"\"" ; for repeat terms
+                 (if (eq (wordreference-term-type source) 'repeat)
+                   (propertize (wordreference-term-term source)
                                  'face font-lock-comment-face)
                    (concat
                     "\n" ; newline if not a repeat term

@@ -579,7 +579,8 @@ and target term, or an example sentence."
            (insert
             "\n -- "
             (propertize wr-eg
-                        'face '(:height 0.8))))
+                        'face '(:height 0.8)
+                        'help-echo (plist-get (car def) :tooltip))))
           (t
            (let* ((source (car def))
                   (source-terms (or (plist-get source :from)     ; new term

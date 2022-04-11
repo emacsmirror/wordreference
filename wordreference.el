@@ -152,7 +152,7 @@ It must match the key of one of the dictionaries in `helm-dictionary-database'."
     (define-key map (kbd "RET") #'wordreference-shr-browse-url-secondary)
     map))
 
-
+
 ;; REQUESTING AND PARSING
 
 (defun wordreference--parse-html-buffer (html-buffer)
@@ -386,7 +386,7 @@ example for an example, and other for everything else."
         (t
          `(:other ,(dom-texts td)))))
 
-
+
 ;; PRINTING:
 
 (defun wordreference-print-translation-buffer (word html-parsed &optional source target)
@@ -781,7 +781,7 @@ HTML is what our original query returned."
               (insert "\n\n" x)))
           links))
 
-
+
 ;; BUFFER, NAVIGATION etc.
 
 (defun wordreference-next-heading (&optional prev)
@@ -994,7 +994,7 @@ Really only works for single French terms."
                          (plist-get plist 'source-target)))
               wordreference-languages-server-list)))
 
-
+
 (defun wordreference--get-region ()
   "Get current region for new search."
   (if (and (equal major-mode 'pdf-view-mode)

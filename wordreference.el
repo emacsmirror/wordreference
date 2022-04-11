@@ -595,7 +595,8 @@ and target term, or an example sentence."
            (insert
             "\n -- "
             (propertize (wordreference-example-eg (car def)) ; wr-eg
-                        'face '(:height 0.8))))
+                        'face '(:height 0.8)
+                        'help-echo (wordreference-example-tooltip (car def)))))
           (t
            (let* ((source (car def))
                   (source-terms

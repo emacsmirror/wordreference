@@ -290,22 +290,25 @@ followed by a list of textual results returned by
   "Build a simple or complex TO-OR-FROM example from TD."
   (let ((dom (dom-by-class td to-or-from)))
     (if (dom-by-class dom "tooltip")
-        (wordreference--build-complex-example dom to-or-from)
-      `(:to-eg ,(dom-texts td)))))
+        (wordreference--build-complex-example dom)
+      (wordreference-example-create
+       :eg (dom-texts td)))))
 
-(defun wordreference--build-complex-example (dom to-or-from)
+(defun wordreference--build-complex-example (dom)
   "Build a complex TO-OR-FROM example from DOM."
-  `(,(if (string= to-or-from "ToEx") :to-eg :from-eg)
-    ,(concat
-      (dom-text
-       (dom-by-tag
-        (dom-by-class dom "tooltip")
-        'b))
-      (dom-text (dom-by-tag
-                 dom 'span)))
-    :tooltip ,(dom-text (dom-child-by-tag
-                         (dom-by-class dom "tooltip")
-                         'span))))
+  (wordreference-example-create
+   :eg
+   ;; `(,(if (string= to-or-from "ToEx") :to-eg :from-eg)
+   (concat
+    (dom-text
+     (dom-by-tag
+      (dom-by-class dom "tooltip")
+      'b))
+    (dom-text (dom-by-tag
+               dom 'span)))
+   :tooltip (dom-text (dom-child-by-tag
+                       (dom-by-class dom "tooltip")
+                       'span))))
 
 (defun wordreference--process-term-text-list (td)
   "Process the terms in TD as a list split on commas or semicolons."
@@ -324,8 +327,8 @@ followed by a list of textual results returned by
 (defun wordreference-build-to-fr-td (td)
   "Build a TD when it is of type FrWrd or ToWrd."
   (let* ((to-or-from (if (dom-by-class td "ToWrd")
-                         :to
-                       :from))
+                         'to
+                       'from))
          (em (dom-by-class td "POS2"))
          (pos (dom-text em))
          (tooltip (dom-by-tag em 'span))
@@ -345,10 +348,24 @@ followed by a list of textual results returned by
          (usage-list (dom-by-class td "engusg"))
          (usage-link (dom-attr (car (dom-by-tag usage-list 'a))
                                'href)))
-    `(,to-or-from ,term-conj-list
-                  :pos ,pos
-                  :usage ,usage-link
-                  :tooltip ,tooltip-text)))
+    (wordreference-term-create
+     :term term-conj-list
+     :type to-or-from
+     :pos pos
+     :usage usage-link
+     :tooltip tooltip-text)))
+
+(cl-defstruct (wordreference-term (:constructor wordreference-term-create))
+  term type pos usage tooltip)
+
+(cl-defstruct (wordreference-note (:constructor wordreference-note-create))
+  note)
+
+(cl-defstruct (wordreference-sense (:constructor wordreference-sense-create))
+  register from-sense to-sense)
+
+(cl-defstruct (wordreference-example (:constructor wordreference-example-create))
+  eg tooltip)
 
 (defun wordreference-build-single-td-list (td)
   "Return textual result for a single TD.
@@ -364,25 +381,25 @@ example for an example, and other for everything else."
          (wordreference-build-example td "FrEx"))
         ((or (dom-by-class td "notePubl")
              (string-prefix-p "Note :" (dom-texts td)))
-         `(:note ,(dom-texts td)))
+         (wordreference-note-create :note (dom-texts td)))
         ((string= " " (dom-texts td))
          `(:repeat "\"\""))
         ;; simple to sense:
         ((dom-by-class td "To2")
-         `(:to-sense ,(dom-texts td)))
+         (wordreference-sense-create :to-sense (dom-texts td)))
         ((dom-by-class td "Fr2")
          ;; complex register, to sense and from sense:
-         `(:register ,(dom-texts (dom-by-class td "Fr2"))
-                     :from-sense ,(dom-text (dom-children td))
-                     :to-sense ,(dom-texts (dom-by-class
-                                            (dom-children td)
-                                            "sense"))))
+         (wordreference-sense-create :register (dom-texts (dom-by-class td "Fr2"))
+                                     :from-sense (dom-text (dom-children td))
+                                     :to-sense (dom-texts (dom-by-class
+                                                           (dom-children td)
+                                                           "sense"))))
         ;; simple from and poss to sense
         ((string-prefix-p " (" (dom-texts td))
-         `(:from-sense ,(dom-text td)
-                       :to-sense ,(dom-texts
-                                   (dom-by-class td
-                                                 "sense"))))
+         (wordreference-sense-create :from-sense (dom-text td)
+                                     :to-sense (dom-texts
+                                                (dom-by-class td
+                                                              "sense"))))
         (t
          `(:other ,(dom-texts td)))))
 
@@ -568,32 +585,37 @@ TRS is the list of table rows from the parsed HTML."
   "Print a single definition DEF in the buffer.
 \nFor now a definition can be a set of source term, context term,
 and target term, or an example sentence."
-  (let (wr-note wr-eg)
-    (cond ((setq wr-note (plist-get (car def) :note))
+  (let (wr-note wr-eg repeat)
+    (cond ((wordreference-note-p (car def))
            (insert
             "\n -- "
-            (propertize wr-note
+            (propertize (wordreference-note-note (car def)) ;wr-note
                         'face '(:height 0.8 :box t))))
-          ((setq wr-eg (or (plist-get (car def) :to-eg)
-                           (plist-get (car def) :from-eg)))
+          ((wordreference-example-p  (car def))
            (insert
             "\n -- "
-            (propertize wr-eg
+            (propertize (wordreference-example-eg (car def)) ; wr-eg
                         'face '(:height 0.8))))
           (t
            (let* ((source (car def))
-                  (source-terms (or (plist-get source :from)     ; new term
-                                    (plist-get source :repeat))) ; repeat term
-                  (source-pos (plist-get source :pos))
-                  (source-sense (wordreference--process-sense-string
-                                 (plist-get (cadr def) :from-sense)))
-                  (register (plist-get (cadr def) :register))
+                  (source-terms
+                   (or (plist-get source :repeat) ; repeat term
+                       (wordreference-term-term source)))
+                  (source-pos (when (wordreference-term-p source)
+                                (wordreference-term-pos source)))
+                  (source-sense (when (wordreference-term-p source)
+                                  (wordreference--process-sense-string
+                                   (wordreference-sense-from-sense (cadr def)))))
+                  (register (when (wordreference-sense-p (cadr def))
+                              (wordreference-sense-register (cadr def))))
                   (target (caddr def))
-                  (target-terms (plist-get target :to))
-                  (target-sense (wordreference--process-sense-string
-                                 (plist-get (cadr def) :to-sense)))
-                  (target-pos (plist-get target :pos))
-                  (usage (plist-get source :usage)))
+                  (target-terms (wordreference-term-term target))
+                  (target-sense (when (wordreference-sense-p (cadr def))
+                                  (wordreference--process-sense-string
+                                   (wordreference-sense-to-sense (cadr def)))))
+                  (target-pos (wordreference-term-pos target))
+                  (usage (when (wordreference-term-p source)
+                           (wordreference-term-usage source))))
              (insert
               "\n"
               (concat
@@ -613,7 +635,8 @@ and target term, or an example sentence."
                (propertize (or source-pos
                                "")
                            'face font-lock-comment-face
-                           'help-echo (plist-get source :tooltip))
+                           'help-echo (when (wordreference-term-p source)
+                                        (wordreference-term-tooltip source)))
                " "
                (when register
                  (concat
@@ -631,7 +654,7 @@ and target term, or an example sentence."
                (propertize (or target-pos
                                "")
                            'face font-lock-comment-face
-                           'help-echo (plist-get target :tooltip))
+                           'help-echo (wordreference-term-tooltip target))
                (when target-sense
                  (concat " "
                          (wordreference--propertize-register-or-sense target-sense))))))))))

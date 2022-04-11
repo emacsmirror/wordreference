@@ -278,7 +278,13 @@ followed by a list of textual results returned by
   (let ((tds (dom-by-tag tr 'td)))
     (mapcar (lambda (x)
               (wordreference-build-single-td-list x))
-            tds)))
+            ;; hack to not collect "_" entries for examples:
+            (if (or (string= (dom-attr (cdr tds) 'class)
+                             "ToEx")
+                    (string= (dom-attr (cdr tds) 'class)
+                             "FrEx"))
+                (cdr tds)
+              tds))))
 
 (defun wordreference-build-example (td to-or-from)
   "Build a simple or complex TO-OR-FROM example from TD."
@@ -574,8 +580,8 @@ and target term, or an example sentence."
          (target-sense (wordreference--process-sense-string
                         (plist-get (cadr def) :to-sense)))
          (target-pos (plist-get target :pos))
-         (eg (or (plist-get (cadr def) :to-eg)
-                 (plist-get (cadr def) :from-eg)))
+         (eg (or (plist-get (car def) :to-eg)
+                 (plist-get (car def) :from-eg)))
          (note (plist-get source :note))
          (usage (plist-get source :usage)))
     (cond

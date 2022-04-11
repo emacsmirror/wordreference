@@ -278,7 +278,7 @@ followed by a list of textual results returned by
   (let ((tds (dom-by-tag tr 'td)))
     (mapcar (lambda (x)
               (wordreference-build-single-td-list x))
-            ;; hack to not collect "_" entries for examples:
+            ;; TODO: improve this hack to not collect "_" entries for examples:
             (if (or (string= (dom-attr (cdr tds) 'class)
                              "ToEx")
                     (string= (dom-attr (cdr tds) 'class)
@@ -306,6 +306,7 @@ followed by a list of textual results returned by
     :tooltip ,(dom-text (dom-child-by-tag
                          (dom-by-class dom "tooltip")
                          'span))))
+
 
 (defun wordreference--process-term-text-list (td)
   "Process the terms in TD as a list split on commas or semicolons."
@@ -365,6 +366,7 @@ example for an example, and other for everything else."
         ((or (dom-by-class td "notePubl")
              (string-prefix-p "Note :" (dom-texts td)))
          `(:note ,(dom-texts td)))
+        ;; FIXME: disambig this from an eg:
         ((string= " " (dom-texts td))
          `(:repeat "\"\""))
         ;; simple to sense:

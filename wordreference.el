@@ -278,7 +278,7 @@ followed by a list of textual results returned by
   (let ((tds (dom-by-tag tr 'td)))
     (mapcar (lambda (x)
               (wordreference-build-single-td-list x))
-            ;; hack to not collect "_" entries for examples:
+            ;; TODO: improve this hack to not collect "_" entries for examples:
             (if (or (string= (dom-attr (cdr tds) 'class)
                              "ToEx")
                     (string= (dom-attr (cdr tds) 'class)
@@ -298,7 +298,6 @@ followed by a list of textual results returned by
   "Build a complex TO-OR-FROM example from DOM."
   (wordreference-example-create
    :eg
-   ;; `(,(if (string= to-or-from "ToEx") :to-eg :from-eg)
    (concat
     (dom-text
      (dom-by-tag
@@ -382,6 +381,7 @@ example for an example, and other for everything else."
         ((or (dom-by-class td "notePubl")
              (string-prefix-p "Note :" (dom-texts td)))
          (wordreference-note-create :note (dom-texts td)))
+        ;; FIXME: disambig this from an eg:
         ((string= " " (dom-texts td))
          `(:repeat "\"\""))
         ;; simple to sense:

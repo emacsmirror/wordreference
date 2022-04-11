@@ -2,7 +2,7 @@
 
 This package allows you to query the dictionaries at https://wordreference.com from within emacs.
 
-It displays terms, part of speech, links to conjugation tables (shown as =▦= or =#=), contextualizing terms, example sentences, notes, other entries the term is found in, and links to forum entries.
+It displays terms, part of speech, links to conjugation tables (shown as =▦= or =#=), contextualizing terms, example sentences, usage infomation, notes, other entries the term is found in, and links to forum entries.
 
 The sole entry point is =wordreference-search=.
 
@@ -28,6 +28,8 @@ The package has been tested with French <> English and Portuguese <> English. Ot
 It looks like this:
 
 [[file:wordreference-screenshot.png][file:./wordreference-screenshot.png]]
+
+If you end up using it, feel free to make suggestions, either by opening an issue or sending me an email.
 
 ** other packages
 

@@ -41,6 +41,7 @@
 (require 'browse-url)
 (require 'thingatpt)
 (require 'text-property-search)
+(require 'cl-lib)
 
 (when (require 'pdf-tools nil :no-error)
   (declare-function pdf-view-active-region-text "pdf-view"))
@@ -152,6 +153,17 @@ It must match the key of one of the dictionaries in `helm-dictionary-database'."
     (define-key map (kbd "RET") #'wordreference-shr-browse-url-secondary)
     map))
 
+(cl-defstruct (wordreference-term (:constructor wordreference-term-create))
+  term type pos usage tooltip)
+
+(cl-defstruct (wordreference-note (:constructor wordreference-note-create))
+  note)
+
+(cl-defstruct (wordreference-sense (:constructor wordreference-sense-create))
+  register from-sense to-sense)
+
+(cl-defstruct (wordreference-example (:constructor wordreference-example-create))
+  eg tooltip)
 
 ;; REQUESTING AND PARSING
 
@@ -353,18 +365,6 @@ followed by a list of textual results returned by
      :pos pos
      :usage usage-link
      :tooltip tooltip-text)))
-
-(cl-defstruct (wordreference-term (:constructor wordreference-term-create))
-  term type pos usage tooltip)
-
-(cl-defstruct (wordreference-note (:constructor wordreference-note-create))
-  note)
-
-(cl-defstruct (wordreference-sense (:constructor wordreference-sense-create))
-  register from-sense to-sense)
-
-(cl-defstruct (wordreference-example (:constructor wordreference-example-create))
-  eg tooltip)
 
 (defun wordreference-build-single-td-list (td)
   "Return textual result for a single TD.

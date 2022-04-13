@@ -29,6 +29,8 @@ It looks like this:
 
 [[file:wordreference-screenshot.png][file:./wordreference-screenshot.png]]
 
+If you end up using it, feel free to make suggestions, either by opening an issue or sending me an email.
+
 ** other packages
 
 You may also be interested in [[https://github.com/mtenders/emacs-leo][emacs-leo]].

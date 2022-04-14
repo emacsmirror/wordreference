@@ -575,76 +575,75 @@ TRS is the list of table rows from the parsed HTML."
   "Print a single definition DEF in the buffer.
 \nFor now a definition can be a set of source term, context term,
 and target term, or an example sentence."
-  (let (wr-note wr-eg)
-    (cond ((wordreference-note-p (car def))
+  (cond ((wordreference-note-p (car def))
+         (insert
+          "\n -- "
+          (propertize (wordreference-note-note (car def)) ;wr-note
+                      'face '(:height 0.8 :box t))))
+        ((wordreference-example-p  (car def))
+         (insert
+          "\n -- "
+          (propertize (wordreference-example-eg (car def)) ; wr-eg
+                      'face '(:height 0.8)
+                      'help-echo (wordreference-example-tooltip (car def)))))
+        (t
+         (let* ((source (car def))
+                (source-terms
+                 (wordreference-term-term source));)
+                (source-pos (wordreference-term-pos source))
+                (source-sense (when (wordreference-sense-p (cadr def))
+                                (wordreference--process-sense-string
+                                 (wordreference-sense-from-sense (cadr def)))))
+                (register (when (wordreference-sense-p (cadr def))
+                            (wordreference-sense-register (cadr def))))
+                (target (caddr def))
+                (target-terms (wordreference-term-term target))
+                (target-sense (when (wordreference-sense-p (cadr def))
+                                (wordreference--process-sense-string
+                                 (wordreference-sense-to-sense (cadr def)))))
+                (target-pos (wordreference-term-pos target))
+                (usage (wordreference-term-usage source)))
            (insert
-            "\n -- "
-            (propertize (wordreference-note-note (car def)) ;wr-note
-                        'face '(:height 0.8 :box t))))
-          ((wordreference-example-p  (car def))
-           (insert
-            "\n -- "
-            (propertize (wordreference-example-eg (car def)) ; wr-eg
-                        'face '(:height 0.8)
-                        'help-echo (wordreference-example-tooltip (car def)))))
-          (t
-           (let* ((source (car def))
-                  (source-terms
-                       (wordreference-term-term source));)
-                  (source-pos (wordreference-term-pos source))
-                  (source-sense (when (wordreference-sense-p (cadr def))
-                                  (wordreference--process-sense-string
-                                   (wordreference-sense-from-sense (cadr def)))))
-                  (register (when (wordreference-sense-p (cadr def))
-                              (wordreference-sense-register (cadr def))))
-                  (target (caddr def))
-                  (target-terms (wordreference-term-term target))
-                  (target-sense (when (wordreference-sense-p (cadr def))
-                                  (wordreference--process-sense-string
-                                   (wordreference-sense-to-sense (cadr def)))))
-                  (target-pos (wordreference-term-pos target))
-                  (usage (wordreference-term-usage source)))
-             (insert
-              "\n"
-              (concat
-               " "
-               (when source-terms
-                 (if (eq (wordreference-term-type source) 'repeat)
+            "\n"
+            (concat
+             " "
+             (when source-terms
+               (if (eq (wordreference-term-type source) 'repeat)
                    (propertize (wordreference-term-term source)
-                                 'face font-lock-comment-face)
-                   (concat
-                    "\n" ; newline if not a repeat term
-                    (when usage
-                      (concat (wordreference--propertize-usage-marker usage)
-                              " "))
-                    (wordreference--insert-terms-and-conj source-terms 'source)
-                    " ")))
-               (propertize (or source-pos
-                               "")
-                           'face font-lock-comment-face
-                           'help-echo (when (wordreference-term-p source)
-                                        (wordreference-term-tooltip source)))
-               " "
-               (when register
+                               'face font-lock-comment-face)
                  (concat
-                  (wordreference--propertize-register-or-sense register)
-                  " "))
-               (when source-sense
-                 (wordreference--propertize-register-or-sense source-sense))
-               "\n           "
-               (propertize "--> "
-                           'face font-lock-comment-face)
-               (when target-terms
-                 (wordreference-unpropertize-source-phrase-in-target
-                  (wordreference--insert-terms-and-conj target-terms 'target)))
-               " "
-               (propertize (or target-pos
-                               "")
-                           'face font-lock-comment-face
-                           'help-echo (wordreference-term-tooltip target))
-               (when target-sense
-                 (concat " "
-                         (wordreference--propertize-register-or-sense target-sense))))))))))
+                  "\n" ; newline if not a repeat term
+                  (when usage
+                    (concat (wordreference--propertize-usage-marker usage)
+                            " "))
+                  (wordreference--insert-terms-and-conj source-terms 'source)
+                  " ")))
+             (propertize (or source-pos
+                             "")
+                         'face font-lock-comment-face
+                         'help-echo (when (wordreference-term-p source)
+                                      (wordreference-term-tooltip source)))
+             " "
+             (when register
+               (concat
+                (wordreference--propertize-register-or-sense register)
+                " "))
+             (when source-sense
+               (wordreference--propertize-register-or-sense source-sense))
+             "\n           "
+             (propertize "--> "
+                         'face font-lock-comment-face)
+             (when target-terms
+               (wordreference-unpropertize-source-phrase-in-target
+                (wordreference--insert-terms-and-conj target-terms 'target)))
+             " "
+             (propertize (or target-pos
+                             "")
+                         'face font-lock-comment-face
+                         'help-echo (wordreference-term-tooltip target))
+             (when target-sense
+               (concat " "
+                       (wordreference--propertize-register-or-sense target-sense)))))))))
 
 (defun wordreference--propertize-usage-marker (usage-url)
   "Propertize a usage marker for USAGE-URL."

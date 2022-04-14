@@ -465,7 +465,7 @@ SOURCE and TARGET are languages."
       (wordreference-prop-query-in-results word)
       (goto-char (point-min))))
   ;; handle searching again from wr:
-  (when (not (equal (buffer-name (current-buffer)) "*wordreference*"))
+  (unless (equal (buffer-name (current-buffer)) "*wordreference*")
     (switch-to-buffer-other-window (get-buffer "*wordreference*")))
   (message "w/s: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms, C: copy search term, n: browse nearby entries, S: switch langs and search, l: search with linguee.com, c: browse on www.cntrl.fr."))
 
@@ -667,7 +667,7 @@ TERMS is plist of '((\"term\" \"conjunction-link\")).
                 (wordreference-propertize-result-term
                  (car x)
                  source-or-target)
-                (when (not (string= (cadr x) ""))
+                (unless (string= (cadr x) "")
                   (concat " "
                           (wordreference--propertize-conjunction-link
                            (car x)
@@ -993,7 +993,7 @@ Really only works for single French terms."
   "Use two-letter SOURCE and TARGET abbrevs to collect full language pair.
 \nThe information is returned from `wordreference-languages-server-list'."
   (let* ((lang-pairs-abbrev (concat source target)))
-    (when (not wordreference-languages-server-list)
+    (unless wordreference-languages-server-list
       (setq wordreference-languages-server-list
             (wordreference--get-supported-lang-pairs)))
     (seq-find (lambda (plist)

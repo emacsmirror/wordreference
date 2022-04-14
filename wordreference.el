@@ -342,9 +342,8 @@ followed by a list of textual results returned by
          (term-text-list (wordreference--process-term-text-list td))
          (conj-list (or (dom-by-class td "conjugate")
                         '(("dummy"))))
-         (conj-list-links (mapcar (lambda (x)
-                                    (or (dom-attr x 'href) ""))
-                                  conj-list))
+         (conj-list-links (cl-loop for x in conj-list
+                                   collect (or (dom-attr x 'href) "")))
          (term-conj-list
           (cl-mapcar
            #'list

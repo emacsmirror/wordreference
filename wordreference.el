@@ -660,7 +660,8 @@ and target term, or an example sentence."
               'help-echo "English usage information available. Click to view."))
 
 (defun wordreference--insert-terms-and-conj (terms source-or-target)
-  "Print a string of TERMS and their conjunction links if any.
+  "Print a string of results and their conjunction links if any.
+TERMS is plist of '((\"term\" \"conjunction-link\")).
 \n SOURCE-OR-TARGET is a symbol to be added as a type property."
   (mapconcat (lambda (x)
                (concat

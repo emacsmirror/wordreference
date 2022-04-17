@@ -963,7 +963,32 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
   (let ((query (concat "\\b"
                        (wordreference-get-results-info-item 'term)
                        "\\b")))
-    (helm-dictionary wordreference-helm-dictionary-name query t)))
+    (wordreference-helm-dictionary wordreference-helm-dictionary-name query t)))
+
+(when (require 'helm-dictionary nil :no-error)
+  (defun wordreference-helm-dictionary (&optional dict-name query not-full)
+    "Load our modified version of `helm-dictionary'.
+Optionally, use only dictionary DICT-NAME and provide input QUERY.
+NOT-FULL means to not display in full-frame."
+    (interactive)
+    (let* ((dict (assoc dict-name helm-dictionary-database))
+           (helm-source-dictionary
+            (if (and dict
+                     (member dict
+                             helm-dictionary-database))
+                (helm-dictionary-build (car dict) (cdr dict))
+              (mapcar
+               (lambda (x) (helm-dictionary-build (car x) (cdr x)))
+               (if (stringp helm-dictionary-database)
+                   (list (cons "Search dictionary" helm-dictionary-database))
+                 helm-dictionary-database))))
+           (input (or query (thing-at-point 'word))))
+      (helm :sources (append helm-source-dictionary (list helm-source-dictionary-online))
+            :full-frame (if not-full nil t)
+            :default input
+            :input (when query input)
+            :candidate-number-limit 500
+            :buffer "*helm dictionary*"))))
 
 (defun wordreference-browse-term-cntrl ()
   "Search for the same term on https://www.cntrl.fr.

@@ -41,6 +41,7 @@
 (require 'browse-url)
 (require 'thingatpt)
 (require 'text-property-search)
+(require 'cl-lib)
 
 (when (require 'pdf-tools nil :no-error)
   (declare-function pdf-view-active-region-text "pdf-view"))
@@ -152,6 +153,17 @@ It must match the key of one of the dictionaries in `helm-dictionary-database'."
     (define-key map (kbd "RET") #'wordreference-shr-browse-url-secondary)
     map))
 
+(cl-defstruct (wordreference-term (:constructor wordreference-term-create))
+  term type pos usage tooltip)
+
+(cl-defstruct (wordreference-note (:constructor wordreference-note-create))
+  note)
+
+(cl-defstruct (wordreference-sense (:constructor wordreference-sense-create))
+  register from-sense to-sense)
+
+(cl-defstruct (wordreference-example (:constructor wordreference-example-create))
+  eg tooltip)
 
 ;; REQUESTING AND PARSING
 
@@ -174,9 +186,8 @@ It must match the key of one of the dictionaries in `helm-dictionary-database'."
 
 (defun wordreference-parse-langs (langs)
   "Return a nested list containing infomation about supported language pairs LANGS."
-  (mapcar (lambda (x)
-            (wordreference-get-lang-elements x))
-          langs))
+  (cl-loop for x in langs
+           collect (wordreference-get-lang-elements x)))
 
 (defun wordreference-get-lang-elements (lang)
   "Return a list containing information about a supported language pair LANG.
@@ -227,18 +238,15 @@ Optionally specify SOURCE and TARGET languages."
          ;; (car entries-tr-ul-li-ul)))
          (entries-rest (cdr entries-tr-ul-li-ul))
          (entries-link-list (dom-by-tag (cdr entries-rest) 'a)))
-    (mapcar (lambda (x)
-              (dom-texts x))
-            entries-link-list)))
+    (cl-loop for x in entries-link-list
+             collect (dom-texts x))))
 
 (defun wordreference--get-word-tables (tables)
   "Get all word tables from list of TABLES."
   (let ((word-tables))
-    (mapc (lambda (x)
-            (when (equal (dom-attr x 'class) "WRD")
-              (push x word-tables)))
-          tables)
-    (reverse word-tables)))
+    (dolist (x tables (reverse word-tables))
+      (when (equal (dom-attr x 'class) "WRD")
+        (push x word-tables)))))
 
 (defun wordreference--get-trs (word-table)
   "Get all table rows from a WORD-TABLE."
@@ -269,43 +277,44 @@ followed by a list of textual results returned by
          (words-trs (cddr trs)))
     (list
      `(:title ,(dom-texts title-tr) :source ,source-abbrev :target ,target-abbrev)
-     (mapcar (lambda (tr)
-               (wordreference--build-tds-text-list tr))
-             words-trs))))
+     (cl-loop
+      for tr in words-trs
+      collect (wordreference--build-tds-text-list tr)))))
 
 (defun wordreference--build-tds-text-list (tr)
   "Return a list of results of both source and target langs from TR."
   (let ((tds (dom-by-tag tr 'td)))
-    (mapcar (lambda (x)
-              (wordreference-build-single-td-list x))
-            ;; TODO: improve this hack to not collect "_" entries for examples:
-            (if (or (string= (dom-attr (cdr tds) 'class)
-                             "ToEx")
-                    (string= (dom-attr (cdr tds) 'class)
-                             "FrEx"))
-                (cdr tds)
-              tds))))
+    (cl-loop
+     for td in (if (or (string= (dom-attr (cdr tds) 'class)
+                                "ToEx")
+                       (string= (dom-attr (cdr tds) 'class)
+                                "FrEx"))
+                   (cdr tds)
+                 tds)
+     collect (wordreference-build-single-td-list td))))
 
 (defun wordreference-build-example (td to-or-from)
   "Build a simple or complex TO-OR-FROM example from TD."
   (let ((dom (dom-by-class td to-or-from)))
     (if (dom-by-class dom "tooltip")
-        (wordreference--build-complex-example dom to-or-from)
-      `(:to-eg ,(dom-texts td)))))
+        (wordreference--build-complex-example dom)
+      (wordreference-example-create
+       :eg (dom-texts td)))))
 
-(defun wordreference--build-complex-example (dom to-or-from)
+(defun wordreference--build-complex-example (dom)
   "Build a complex TO-OR-FROM example from DOM."
-  `(,(if (string= to-or-from "ToEx") :to-eg :from-eg)
-    ,(concat
-      (dom-text
-       (dom-by-tag
-        (dom-by-class dom "tooltip")
-        'b))
-      (dom-text (dom-by-tag
-                 dom 'span)))
-    :tooltip ,(dom-text (dom-child-by-tag
-                         (dom-by-class dom "tooltip")
-                         'span))))
+  (wordreference-example-create
+   :eg
+   (concat
+    (dom-text
+     (dom-by-tag
+      (dom-by-class dom "tooltip")
+      'b))
+    (dom-text (dom-by-tag
+               dom 'span)))
+   :tooltip (dom-text (dom-child-by-tag
+                       (dom-by-class dom "tooltip")
+                       'span))))
 
 
 (defun wordreference--process-term-text-list (td)
@@ -315,18 +324,18 @@ followed by a list of textual results returned by
                                 (dom-texts (dom-by-tag td 'strong))
                               (dom-text td))
                             "[,;] ")))
-    (mapcar (lambda (x)
-              (when x
-                (wordreference--cull-conj-arrows
-                 (s-collapse-whitespace
-                  (string-trim x)))))
-            text-string-split)))
+    (cl-loop
+     for x in text-string-split
+     when x
+     collect (wordreference--cull-conj-arrows
+              (s-collapse-whitespace
+               (string-trim x))))))
 
 (defun wordreference-build-to-fr-td (td)
   "Build a TD when it is of type FrWrd or ToWrd."
   (let* ((to-or-from (if (dom-by-class td "ToWrd")
-                         :to
-                       :from))
+                         'to
+                       'from))
          (em (dom-by-class td "POS2"))
          (pos (dom-text em))
          (tooltip (dom-by-tag em 'span))
@@ -334,10 +343,8 @@ followed by a list of textual results returned by
          (term-text-list (wordreference--process-term-text-list td))
          (conj-list (or (dom-by-class td "conjugate")
                         '(("dummy"))))
-         (conj-list-links (mapcar (lambda (x)
-                                    (or (dom-attr x 'href)
-                                        ""))
-                                  conj-list))
+         (conj-list-links (cl-loop for x in conj-list
+                                   collect (or (dom-attr x 'href) "")))
          (term-conj-list
           (cl-mapcar
            #'list
@@ -346,10 +353,12 @@ followed by a list of textual results returned by
          (usage-list (dom-by-class td "engusg"))
          (usage-link (dom-attr (car (dom-by-tag usage-list 'a))
                                'href)))
-    `(,to-or-from ,term-conj-list
-                  :pos ,pos
-                  :usage ,usage-link
-                  :tooltip ,tooltip-text)))
+    (wordreference-term-create
+     :term term-conj-list
+     :type to-or-from
+     :pos pos
+     :usage usage-link
+     :tooltip tooltip-text)))
 
 (defun wordreference-build-single-td-list (td)
   "Return textual result for a single TD.
@@ -365,26 +374,26 @@ example for an example, and other for everything else."
          (wordreference-build-example td "FrEx"))
         ((or (dom-by-class td "notePubl")
              (string-prefix-p "Note :" (dom-texts td)))
-         `(:note ,(dom-texts td)))
+         (wordreference-note-create :note (dom-texts td)))
         ;; FIXME: disambig this from an eg:
         ((string= " " (dom-texts td))
-         `(:repeat "\"\""))
+         (wordreference-term-create :term "\"\"" :type 'repeat))
         ;; simple to sense:
         ((dom-by-class td "To2")
-         `(:to-sense ,(dom-texts td)))
+         (wordreference-sense-create :to-sense (dom-texts td)))
         ((dom-by-class td "Fr2")
          ;; complex register, to sense and from sense:
-         `(:register ,(dom-texts (dom-by-class td "Fr2"))
-                     :from-sense ,(dom-text (dom-children td))
-                     :to-sense ,(dom-texts (dom-by-class
-                                            (dom-children td)
-                                            "sense"))))
+         (wordreference-sense-create :register (dom-texts (dom-by-class td "Fr2"))
+                                     :from-sense (dom-text (dom-children td))
+                                     :to-sense (dom-texts (dom-by-class
+                                                           (dom-children td)
+                                                           "sense"))))
         ;; simple from and poss to sense
         ((string-prefix-p " (" (dom-texts td))
-         `(:from-sense ,(dom-text td)
-                       :to-sense ,(dom-texts
-                                   (dom-by-class td
-                                                 "sense"))))
+         (wordreference-sense-create :from-sense (dom-text td)
+                                     :to-sense (dom-texts
+                                                (dom-by-class td
+                                                              "sense"))))
         (t
          `(:other ,(dom-texts td)))))
 
@@ -457,7 +466,7 @@ SOURCE and TARGET are languages."
       (wordreference-prop-query-in-results word)
       (goto-char (point-min))))
   ;; handle searching again from wr:
-  (when (not (equal (buffer-name (current-buffer)) "*wordreference*"))
+  (unless (equal (buffer-name (current-buffer)) "*wordreference*")
     (switch-to-buffer-other-window (get-buffer "*wordreference*")))
   (message "w/s: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms, C: copy search term, n: browse nearby entries, S: switch langs and search, l: search with linguee.com, c: browse on www.cntrl.fr."))
 
@@ -466,19 +475,18 @@ SOURCE and TARGET are languages."
   (let ((word-spl (split-string word)))
     (save-excursion
       (goto-char (point-min))
-      (mapc (lambda (x)
-              (while (and (search-forward-regexp (concat "\\b" x "\\b")
-                                                 nil 'noerror)
-                          ;;don't add props to note boxes:
-                          (not (equal (get-text-property (point) 'face)
-                                      '(:height 0.8 :box t)))
-                          ;; don't add props to sense and register text:
-                          (not (equal (get-text-property (point) 'face)
-                                      '(:inherit font-lock-comment-face :slant italic))))
-                (add-text-properties (- (point) (length x)) (point)
-                                     '(face (:inherit success :weight bold))))
-              (goto-char (point-min)))
-            word-spl))))
+      (cl-loop for x in word-spl
+               do (cl-loop while (and (search-forward-regexp (concat "\\b" x "\\b")
+                                                             nil 'noerror)
+                                      ;;don't add props to note boxes:
+                                      (not (equal (get-text-property (point) 'face)
+                                                  '(:height 0.8 :box t)))
+                                      ;; don't add props to sense and register text:
+                                      (not (equal (get-text-property (point) 'face)
+                                                  '(:inherit font-lock-comment-face :slant italic))))
+                           do (add-text-properties (- (point) (length x)) (point)
+                                                   '(face (:inherit success :weight bold)))
+               finally (goto-char (point-min)))))))
 
 (defun wordreference-print-heading (heading)
   "Insert a single propertized HEADING."
@@ -489,11 +497,10 @@ SOURCE and TARGET are languages."
 
 (defun wordreference-print-tables (tables)
   "Print a list of TABLES."
-  (mapcar (lambda (x)
-            (wordreference-print-trs-results
-             (wordreference-collect-trs-results-list
-              (wordreference--get-trs x))))
-          tables))
+  (cl-loop for x in tables
+           collect (wordreference-print-trs-results
+                    (wordreference-collect-trs-results-list
+                     (wordreference--get-trs x)))))
 
 (defun wordreference-print-trs-results (trs)
   "Print a section heading followed by its definitions.
@@ -510,9 +517,8 @@ TRS is the list of table rows from the parsed HTML."
 
 (defun wordreference-print-definitions (defs)
   "Print a list of definitions DEFS."
-  (mapc (lambda (def)
-          (wordreference-print-single-definition def))
-        defs)
+  (cl-loop for def in defs
+           do (wordreference-print-single-definition def))
   (insert "\n"))
 
 (defun wordreference--cull-conj-arrows (result)
@@ -570,74 +576,75 @@ TRS is the list of table rows from the parsed HTML."
   "Print a single definition DEF in the buffer.
 \nFor now a definition can be a set of source term, context term,
 and target term, or an example sentence."
-  (let (wr-note wr-eg)
-    (cond ((setq wr-note (plist-get (car def) :note))
+  (cond ((wordreference-note-p (car def))
+         (insert
+          "\n -- "
+          (propertize (wordreference-note-note (car def)) ;wr-note
+                      'face '(:height 0.8 :box t))))
+        ((wordreference-example-p  (car def))
+         (insert
+          "\n -- "
+          (propertize (wordreference-example-eg (car def)) ; wr-eg
+                      'face '(:height 0.8)
+                      'help-echo (wordreference-example-tooltip (car def)))))
+        (t
+         (let* ((source (car def))
+                (source-terms
+                 (wordreference-term-term source));)
+                (source-pos (wordreference-term-pos source))
+                (source-sense (when (wordreference-sense-p (cadr def))
+                                (wordreference--process-sense-string
+                                 (wordreference-sense-from-sense (cadr def)))))
+                (register (when (wordreference-sense-p (cadr def))
+                            (wordreference-sense-register (cadr def))))
+                (target (caddr def))
+                (target-terms (wordreference-term-term target))
+                (target-sense (when (wordreference-sense-p (cadr def))
+                                (wordreference--process-sense-string
+                                 (wordreference-sense-to-sense (cadr def)))))
+                (target-pos (wordreference-term-pos target))
+                (usage (wordreference-term-usage source)))
            (insert
-            "\n -- "
-            (propertize wr-note
-                        'face '(:height 0.8 :box t))))
-          ((setq wr-eg (or (plist-get (car def) :to-eg)
-                           (plist-get (car def) :from-eg)))
-           (insert
-            "\n -- "
-            (propertize wr-eg
-                        'face '(:height 0.8)
-                        'help-echo (plist-get (car def) :tooltip))))
-          (t
-           (let* ((source (car def))
-                  (source-terms (or (plist-get source :from)     ; new term
-                                    (plist-get source :repeat))) ; repeat term
-                  (source-pos (plist-get source :pos))
-                  (source-sense (wordreference--process-sense-string
-                                 (plist-get (cadr def) :from-sense)))
-                  (register (plist-get (cadr def) :register))
-                  (target (caddr def))
-                  (target-terms (plist-get target :to))
-                  (target-sense (wordreference--process-sense-string
-                                 (plist-get (cadr def) :to-sense)))
-                  (target-pos (plist-get target :pos))
-                  (usage (plist-get source :usage)))
-             (insert
-              "\n"
-              (concat
-               " "
-               (when source-terms
-                 (if (and (stringp source-terms)
-                          (string= source-terms "\"\""))
-                     (propertize "\"\"" ; for repeat terms
-                                 'face font-lock-comment-face)
-                   (concat
-                    "\n" ; newline if not a repeat term
-                    (when usage
-                      (concat (wordreference--propertize-usage-marker usage)
-                              " "))
-                    (wordreference--insert-terms-and-conj source-terms 'source)
-                    " ")))
-               (propertize (or source-pos
-                               "")
-                           'face font-lock-comment-face
-                           'help-echo (plist-get source :tooltip))
-               " "
-               (when register
+            "\n"
+            (concat
+             " "
+             (when source-terms
+               (if (eq (wordreference-term-type source) 'repeat)
+                   (propertize (wordreference-term-term source)
+                               'face font-lock-comment-face)
                  (concat
-                  (wordreference--propertize-register-or-sense register)
-                  " "))
-               (when source-sense
-                 (wordreference--propertize-register-or-sense source-sense))
-               "\n           "
-               (propertize "--> "
-                           'face font-lock-comment-face)
-               (when target-terms
-                 (wordreference-unpropertize-source-phrase-in-target
-                  (wordreference--insert-terms-and-conj target-terms 'target)))
-               " "
-               (propertize (or target-pos
-                               "")
-                           'face font-lock-comment-face
-                           'help-echo (plist-get target :tooltip))
-               (when target-sense
-                 (concat " "
-                         (wordreference--propertize-register-or-sense target-sense))))))))))
+                  "\n" ; newline if not a repeat term
+                  (when usage
+                    (concat (wordreference--propertize-usage-marker usage)
+                            " "))
+                  (wordreference--insert-terms-and-conj source-terms 'source)
+                  " ")))
+             (propertize (or source-pos
+                             "")
+                         'face font-lock-comment-face
+                         'help-echo (when (wordreference-term-p source)
+                                      (wordreference-term-tooltip source)))
+             " "
+             (when register
+               (concat
+                (wordreference--propertize-register-or-sense register)
+                " "))
+             (when source-sense
+               (wordreference--propertize-register-or-sense source-sense))
+             "\n           "
+             (propertize "--> "
+                         'face font-lock-comment-face)
+             (when target-terms
+               (wordreference-unpropertize-source-phrase-in-target
+                (wordreference--insert-terms-and-conj target-terms 'target)))
+             " "
+             (propertize (or target-pos
+                             "")
+                         'face font-lock-comment-face
+                         'help-echo (wordreference-term-tooltip target))
+             (when target-sense
+               (concat " "
+                       (wordreference--propertize-register-or-sense target-sense)))))))))
 
 (defun wordreference--propertize-usage-marker (usage-url)
   "Propertize a usage marker for USAGE-URL."
@@ -653,14 +660,15 @@ and target term, or an example sentence."
               'help-echo "English usage information available. Click to view."))
 
 (defun wordreference--insert-terms-and-conj (terms source-or-target)
-  "Print a string of TERMS and their conjunction links if any.
+  "Print a string of results and their conjunction links if any.
+TERMS is plist of '((\"term\" \"conjunction-link\")).
 \n SOURCE-OR-TARGET is a symbol to be added as a type property."
   (mapconcat (lambda (x)
                (concat
                 (wordreference-propertize-result-term
                  (car x)
                  source-or-target)
-                (when (not (string= (cadr x) ""))
+                (unless (string= (cadr x) "")
                   (concat " "
                           (wordreference--propertize-conjunction-link
                            (car x)
@@ -761,30 +769,27 @@ HTML is what our original query returned."
 
 (defun wordreference-process-forum-links (links)
   "Propertize LINKS to forum entries for inserting."
-  (mapcar (lambda (x)
-            (when (and (not (stringp x)) ; skip " - grammaire" string for now
-                       (not (equal (dom-tag x) 'br))) ; skip empty br tags too
-              (let ((forum-text (dom-text x))
-                    (forum-href (dom-attr x 'href)))
-                (propertize forum-text
-                            'button t
-                            'follow-link t
-                            'shr-url forum-href
-                            'keymap wordreference-link-map
-                            'fontified t
-                            'face 'warning
-                            'mouse-face 'highlight
-                            'help-echo (concat "Browse forums for '"
-                                               forum-text "'")))))
-          links))
+  (cl-loop for x in links
+           when (and (not (stringp x)) ; skip " - grammaire" string for now
+                     (not (equal (dom-tag x) 'br))) ; skip empty br tags too
+           collect (let ((forum-text (dom-text x))
+                         (forum-href (dom-attr x 'href)))
+                     (propertize forum-text
+                                 'button t
+                                 'follow-link t
+                                 'shr-url forum-href
+                                 'keymap wordreference-link-map
+                                 'fontified t
+                                 'face 'warning
+                                 'mouse-face 'highlight
+                                 'help-echo (concat "Browse forums for '"
+                                                    forum-text "'")))))
 
 (defun wordreference-print-forum-links (links)
   "Print a list of LINKS to forum entries."
-  (mapcar (lambda (x)
-            (when x ; skip all our empties
-              (insert "\n\n" x)))
-          links))
-
+  (cl-loop for x in links
+           when x ; skip all our empties
+           collect (insert "\n\n" x)))
 
 ;; BUFFER, NAVIGATION etc.
 
@@ -870,9 +875,8 @@ Word or phrase at point is determined by button text property."
 
 (defun wordreference-cull-brackets-from-entry-list (entries)
   "Cull any [bracketed] parts of a results in ENTRIES."
-  (mapcar (lambda (entry)
-            (wordreference-cull-brackets-from-entry entry))
-          entries))
+  (cl-loop for entry in entries
+           collect (wordreference-cull-brackets-from-entry entry)))
 
 (defun wordreference-cull-brackets-from-entry (entry)
   "Cull any [bracketed] parts of a result ENTRY.
@@ -990,7 +994,7 @@ Really only works for single French terms."
   "Use two-letter SOURCE and TARGET abbrevs to collect full language pair.
 \nThe information is returned from `wordreference-languages-server-list'."
   (let* ((lang-pairs-abbrev (concat source target)))
-    (when (not wordreference-languages-server-list)
+    (unless wordreference-languages-server-list
       (setq wordreference-languages-server-list
             (wordreference--get-supported-lang-pairs)))
     (seq-find (lambda (plist)

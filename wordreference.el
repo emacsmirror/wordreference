@@ -486,7 +486,7 @@ SOURCE and TARGET are languages."
                                                   '(:inherit font-lock-comment-face :slant italic))))
                            do (add-text-properties (- (point) (length x)) (point)
                                                    '(face (:inherit success :weight bold)))
-               finally (goto-char (point-min)))))))
+                           finally (goto-char (point-min)))))))
 
 (defun wordreference-print-heading (heading)
   "Insert a single propertized HEADING."
@@ -579,12 +579,12 @@ and target term, or an example sentence."
   (cond ((wordreference-note-p (car def))
          (insert
           "\n -- "
-          (propertize (wordreference-note-note (car def)) ;wr-note
+          (propertize (wordreference-note-note (car def))
                       'face '(:height 0.8 :box t))))
         ((wordreference-example-p  (car def))
          (insert
           "\n -- "
-          (propertize (wordreference-example-eg (car def)) ; wr-eg
+          (propertize (wordreference-example-eg (car def))
                       'face '(:height 0.8)
                       'help-echo (wordreference-example-tooltip (car def)))))
         (t

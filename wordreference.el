@@ -10,10 +10,6 @@
 ;; Prefix: wordreference
 ;; Separator: -
 
-;;; Commentary:
-;;
-;; A simple interface for wordreference.com.
-
 ;;; License:
 ;;
 ;; This file is NOT part of GNU Emacs.
@@ -31,7 +27,13 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-;; nb: wr requires a user agent to return a request
+;;; Commentary:
+;;
+;; A simple interface to the wordreference.com dictionaries.
+
+
+;; nb: wr requires a user agent to return a request.
+;; TODO: (offer to?) set a privacy friendly user agent, cookies settings, etc.
 
 ;;; Code:
 (require 's)
@@ -839,7 +841,7 @@ HTML is what our original query returned."
            (previous-single-property-change (point) 'button)) ; range start
     (next-single-property-change (point) 'button))))
 
-(defun wordreference--return-search-word ()
+(defun wordreference-return-search-word ()
   "Translate result word or phrase at point.
 Word or phrase at point is determined by button text property."
   (interactive)
@@ -970,7 +972,6 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
     "Load our modified version of `helm-dictionary'.
 Optionally, use only dictionary DICT-NAME and provide input QUERY.
 NOT-FULL means to not display in full-frame."
-    (interactive)
     (let* ((dict (assoc dict-name helm-dictionary-database))
            (helm-source-dictionary
             (if (and dict

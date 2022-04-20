@@ -5,7 +5,7 @@
 ;;
 ;; Package-Requires: ((emacs "27.1") (s "1.12.0"))
 ;; Keywords: convenience, translate
-;; URL: https://codeberg.org/martianh/wordreference
+;; URL: https://codeberg.org/martianh/wordreference.el
 ;; Version: 0.2
 ;; Prefix: wordreference
 ;; Separator: -
@@ -31,11 +31,11 @@
 ;;
 ;; A simple interface to the wordreference.com dictionaries.
 
+;;; Code:
 
 ;; nb: wr requires a user agent to return a request.
 ;; TODO: (offer to?) set a privacy friendly user agent, cookies settings, etc.
 
-;;; Code:
 (require 's)
 (require 'xml)
 (require 'dom)

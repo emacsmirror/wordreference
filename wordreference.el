@@ -142,7 +142,7 @@ It must match the key of one of the dictionaries in `helm-dictionary-database'."
     (define-key map (kbd "n") #'wordreference-nearby-entries-search)
     (define-key map (kbd ",") #'wordreference-previous-heading)
     (define-key map (kbd ".") #'wordreference-next-heading)
-    (define-key map (kbd "RET") #'wordreference--return-search-word)
+    (define-key map (kbd "RET") #'wordreference-return-search-word)
     (define-key map (kbd "S") #'wordreference-switch-source-target-and-search)
     map)
   "Keymap for wordreference mode.")
@@ -150,7 +150,7 @@ It must match the key of one of the dictionaries in `helm-dictionary-database'."
 (defvar wordreference-result-search-map
   (let ((map (make-sparse-keymap)))
     (define-key map [mouse-2] #'wordreference-click-search-word)
-    (define-key map (kbd "RET") #'wordreference--return-search-word)
+    (define-key map (kbd "RET") #'wordreference-return-search-word)
     map))
 
 (defvar wordreference-link-map

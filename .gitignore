@@ -1,0 +1,14 @@
+# Compiled
+*.elc
+
+# Packaging
+.cask
+
+# Other
+.DS_Store
+stubfile.plstore
+*~
+dist/
+
+# notes
+/wordreference.org

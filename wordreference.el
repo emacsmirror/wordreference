@@ -222,12 +222,22 @@ The elements are formatted as follows: \"Spanish-English\" \"esen\" \"es\" \"en\
 (defun wordreference--retrieve-parse-html (word &optional source target)
   "Query wordreference.com for WORD, and parse the HTML response.
 Optionally specify SOURCE and TARGET languages."
-  (let* ((url (wordreference--construct-url source target word))
-	     (html-buffer (url-retrieve-synchronously url)))
-    (with-current-buffer html-buffer
-      (goto-char (point-min))
-      (libxml-parse-html-region
-       (search-forward "\n\n") (point-max)))))
+  (let* ((url (wordreference--construct-url source target word)))
+    (url-retrieve url
+                  'wordreference--parse-async (list word source target))))
+
+(defun wordreference--parse-async (_status word source target)
+  ""
+  (let ((parsed
+         (with-current-buffer (current-buffer)
+           (goto-char (point-min))
+           (libxml-parse-html-region
+            (search-forward "\n\n") (point-max)))))
+    (wordreference-print-translation-buffer
+     word
+     parsed
+     source
+     target)))
 
 (defun wordreference--get-tables (dom)
   "Get tables from parsed HTML response DOM."
@@ -240,8 +250,6 @@ Optionally specify SOURCE and TARGET languages."
                          "contenttable"))
          (entries-tr-ul (dom-by-id (car entries-table) "left"))
          (entries-tr-ul-li-ul (dom-by-tag (car entries-tr-ul) 'ul))
-         ;; (entries-heading (dom-text
-         ;; (car entries-tr-ul-li-ul)))
          (entries-rest (cdr entries-tr-ul-li-ul))
          (entries-link-list (dom-by-tag (cdr entries-rest) 'a)))
     (cl-loop for x in entries-link-list
@@ -1070,11 +1078,7 @@ With a PREFIX arg, prompt for source and target language pair."
                    (read-string (format "Wordreference search (%s): "
                                         (or region (current-word) ""))
                                 nil nil (or region (current-word))))))
-    (wordreference-print-translation-buffer
-     word
-     (wordreference--retrieve-parse-html word source target)
-     source
-     target)))
+    (wordreference--retrieve-parse-html word source target)))
 
 (define-derived-mode wordreference-mode special-mode "wordreference"
   :group 'wordreference

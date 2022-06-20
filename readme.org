@@ -8,7 +8,15 @@ The sole entry point is =wordreference-search=.
 
 You can customize the default source and target languages =wordreference-source-lang= and =wordreference-target-lang=. If you call =wordreference-search= with a prefix argument, you can also choose your languages interactively.
 
-In the results buffer:
+The package has been tested with French <> English and Portuguese <> English. Other languages work but may not be parsed as well.
+
+** install
+
+=wordreference.el= is available on MELPA.
+
+If you already have it set up, you can simply call =M-x package-install RET wordreference=.
+
+** In the results buffer:
 
 - =w= or =s= to start a new search (mark any word first to search it by default) with the same language pair as last search
 - =<tab>= / =<backtab>= to move point backward and forward between entries
@@ -23,13 +31,14 @@ In the results buffer:
 - =l= to search the same term on https://www.linguee.com
 - =S= to swap source and target and search for same term again
 
-The package has been tested with French <> English and Portuguese <> English. Other languages work but may not be parsed as well.
-
-It looks like this:
+** screenshot 
 
 [[file:wordreference-screenshot.png][file:./wordreference-screenshot.png]]
 
-If you end up using it, feel free to make suggestions, either by opening an issue or sending me an email.
+
+** contributions, feedback
+
+Contributions and feedback are welcome. Feel free to make suggestions, either by opening an issue or sending me an email.
 
 ** other packages
 

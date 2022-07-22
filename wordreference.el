@@ -484,23 +484,28 @@ SOURCE and TARGET are languages."
     (switch-to-buffer-other-window (get-buffer "*wordreference*")))
   (message "w/s: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms, C: copy search term, n: browse nearby entries, S: switch langs and search, l: search with linguee.com, c: browse on www.cntrl.fr."))
 
-(defun wordreference-prop-query-in-results (word)
-  "Propertize query WORD in results buffer."
-  (let ((word-spl (split-string word)))
+(defun wordreference-prop-query-in-results (query)
+  "Propertize string QUERY in results buffer."
+  (let ((query-spl (split-string query)))
     (save-excursion
       (goto-char (point-min))
-      (cl-loop for x in word-spl
-               do (cl-loop while (and (search-forward-regexp (concat "\\b" x "\\b")
-                                                             nil 'noerror)
-                                      ;;don't add props to note boxes:
-                                      (not (equal (get-text-property (point) 'face)
-                                                  '(:height 0.8 :box t)))
-                                      ;; don't add props to sense and register text:
-                                      (not (equal (get-text-property (point) 'face)
-                                                  '(:inherit font-lock-comment-face :slant italic))))
-                           do (add-text-properties (- (point) (length x)) (point)
-                                                   '(face (:inherit success :weight bold)))
-                           finally (goto-char (point-min)))))))
+      (cl-loop for x in query-spl
+               do (wordreference-prop-single-term-in-results x)))))
+
+(defun wordreference-prop-single-term-in-results (term)
+  (cl-loop while (search-forward-regexp (concat "\\b" term "\\b")
+                                        nil 'noerror)
+           do (unless
+                  (or
+                   ;; don't add to Note box:
+                   (equal (get-text-property (point) 'face)
+                          '(:height 0.8 :box t))
+                   ;; don't add to sense and register text:
+                   (equal (get-text-property (point) 'face)
+                          '(:inherit font-lock-comment-face :slant italic)))
+                (add-text-properties (- (point) (length term)) (point)
+                                     '(face (:inherit success :weight bold))))
+           finally (goto-char (point-min))))
 
 (defun wordreference-print-heading (heading)
   "Insert a single propertized HEADING."

@@ -559,12 +559,10 @@ TRS is the list of table rows from the parsed HTML."
               ;; alternative mega regex :
               ;; (we name both our groups 2 to always catch the match)
               "\\(([[:blank:]]+\\(?2:.*[[:alnum:]$]\\)[[:blank:]]?)\\|(\\(?2:.*?\\)[[:blank:]]+)\\)"
-
               result)
         (setq result (replace-match
                       "(\\2)"
-                      t nil result))));)
-
+                      t nil result))))
     result))
 
 (defun wordreference--cull-space-between-brackets (result)

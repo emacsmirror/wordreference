@@ -227,7 +227,7 @@ Optionally specify SOURCE and TARGET languages."
                   'wordreference--parse-async (list word source target))))
 
 (defun wordreference--parse-async (_status word source target)
-  ""
+  "Callback to parse query response for WORD from SOURCE to TARGET language."
   (let ((parsed
          (with-current-buffer (current-buffer)
            (goto-char (point-min))
@@ -496,6 +496,7 @@ SOURCE and TARGET are languages."
                do (wordreference-prop-single-term-in-results x)))))
 
 (defun wordreference-prop-single-term-in-results (term)
+  "Propertize single TERM in results buffer."
   (cl-loop while (search-forward-regexp (concat "\\b" term "\\b")
                                         nil 'noerror)
            do (unless

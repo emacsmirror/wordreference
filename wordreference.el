@@ -452,7 +452,10 @@ SOURCE and TARGET are languages."
       (wordreference-mode)
       ;; print principle, supplementary, particule verbs, and compound tables:
       (if (not word-tables)
-          (insert "looks like wordreference returned nada.\n\nHit 'S' to search again with languages reversed.\n\n")
+          (progn (insert "Hit 'S' to search again with languages reversed.\n\n")
+                 ;; if no results, print 'did you mean?' entries:
+                 (wordreference--fetch-did-you-mean word source target))
+
         (wordreference-print-tables word-tables))
       ;; print list of term also found in these entries
       (wordreference-print-also-found-entries html-parsed)
@@ -807,6 +810,68 @@ HTML is what our original query returned."
   (cl-loop for x in links
            when x ; skip all our empties
            collect (insert "\n\n" x)))
+
+;; DID YOU MEAN results:
+
+(defun wordreference--fetch-did-you-mean (&optional word source target)
+  "Make http request to did you mean url, for WORD.
+From SOURCE language to TARGET language, as two letter language codes."
+  (let ((url
+         (concat "https://spell.wordreference.com/spell/spelljs.php?dict="
+                 source target "&w=" word)))
+    (url-retrieve
+     url
+     (lambda (status)
+       (wordreference--parse-did-you-mean)))))
+
+(defun wordreference--parse-did-you-mean ()
+  "Parse the html response and print suggested entries."
+  (goto-char (point-min))
+  (when (save-excursion
+          ;; when we have some html:
+          (re-search-forward "<table" nil t))
+    (let* ((parsed (libxml-parse-html-region
+                    (progn (re-search-forward "\n\n")
+                           (forward-line 2)
+                           (point))
+                    (progn (re-search-forward "`;")
+                           (backward-char 2)
+                           (point))))
+           (links (dom-by-tag parsed 'a))
+           (suggestions (mapcar (lambda (x)
+                                  (dom-text x))
+                                links)))
+      (wordreference--print-suggestions suggestions))))
+
+(defun wordreference--print-suggestions (suggestions)
+  "Print `did you mean' SUGGESTIONS."
+  (let ((propertized (wordreference--propertize-suggestions suggestions)))
+    (when propertized
+      (with-current-buffer "*wordreference*"
+        (goto-char (point-min))
+        (read-only-mode -1)
+        (insert
+         "looks like wordreference returned nada.\n\nDid you mean:\n\n "
+         (mapconcat #'identity propertized " ")
+         "\n\n")
+        ;; because our printing was async, it was too late for buttons:
+        (wordreference--make-buttons)
+        (goto-char (point-min))))))
+
+(defun wordreference--propertize-suggestions (suggestions)
+  "Propertize list of SUGGESTIONS."
+  (mapcar (lambda (x)
+            (propertize x
+                        'button t
+                        'follow-link t
+                        'term x
+                        'keymap wordreference-result-search-map
+                        'fontified t
+                        'face 'warning
+                        'mouse-face 'highlight
+                        'help-echo (concat "Search wordreference for '"
+                                           x "'")))
+          suggestions))
 
 ;; BUFFER, NAVIGATION etc.
 

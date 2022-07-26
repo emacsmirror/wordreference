@@ -324,12 +324,11 @@ followed by a list of textual results returned by
      (dom-by-tag
       (dom-by-class dom "tooltip")
       'b))
-    (dom-text (dom-by-tag
-               dom 'span)))
+    (dom-text (or (dom-by-tag dom 'i)
+                  (dom-by-tag dom 'span))))
    :tooltip (dom-text (dom-child-by-tag
                        (dom-by-class dom "tooltip")
                        'span))))
-
 
 (defun wordreference--process-term-text-list (td)
   "Process the terms in TD as a list split on commas or semicolons."

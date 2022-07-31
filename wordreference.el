@@ -443,12 +443,11 @@ SOURCE and TARGET are languages."
       (erase-buffer)
       (wordreference-mode)
       ;; print principle, supplementary, particule verbs, and compound tables:
-      (if (not word-tables)
-          (progn (insert "Hit 'S' to search again with languages reversed.\n\n")
-                 ;; if no results, print 'did you mean?' entries:
-                 (wordreference--fetch-did-you-mean word source target))
-
-        (wordreference-print-tables word-tables))
+      (if word-tables
+          (wordreference-print-tables word-tables)
+        (insert "Hit 'S' to search again with languages reversed.\n\n")
+        ;; if no results, print 'did you mean?' entries:
+        (wordreference--fetch-did-you-mean word source target))
       ;; print list of term also found in these entries
       (wordreference-print-also-found-entries html-parsed)
       ;; print forums

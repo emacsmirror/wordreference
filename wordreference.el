@@ -543,43 +543,36 @@ TRS is the list of table rows from the parsed HTML."
            do (wordreference-print-single-definition def))
   (insert "\n"))
 
-(defun wordreference--cull-conj-arrows (result)
-  "Remove any conjugation arrows from RESULT."
+(defun wordreference--cull-string (result regex replacement)
+  "Replace REPLACEMENT in RESULT when REGEX is found in it."
   (when result
     (save-match-data
-      (while (string-match " ⇒"
-                           result)
+      (while (string-match regex result)
         (setq result (replace-match
-                      ""
+                      replacement
                       t nil result))))
     result))
+
+(defun wordreference--cull-conj-arrows (result)
+  "Remove any conjugation arrows from RESULT."
+  (wordreference--cull-string result " ⇒" ""))
 
 (defun wordreference--cull-single-spaces-in-brackets (result)
   "Remove any spaces inside brackets from RESULT."
-  (when result
-    (save-match-data
-      (while (string-match
-              ;; alternative mega regex :
-              ;; (we name both our groups 2 to always catch the match)
-              "\\(([[:blank:]]+\\(?2:.*[[:alnum:]$]\\)[[:blank:]]?)\\|(\\(?2:.*?\\)[[:blank:]]+)\\)"
-              result)
-        (setq result (replace-match
-                      "(\\2)"
-                      t nil result))))
-    result))
+  (wordreference--cull-string
+   result 
+   ;; alternative mega regex :
+   ;; (we name both our groups 2 to always catch the match)
+   "\\(([[:blank:]]+\\(?2:.*[[:alnum:]$]\\)[[:blank:]]?)\\|(\\(?2:.*?\\)[[:blank:]]+)\\)"
+   "(\\2)"))
 
 (defun wordreference--cull-space-between-brackets (result)
   "Remove any spaces between closing brackets from RESULT."
-  (when result
-    (save-match-data
-      (while (string-match
-              ;; ] + SPC + ) :
-              "][[:blank:]])"
-              result)
-        (setq result (replace-match
-                      "])"
-                      t nil result))))
-    result))
+  (wordreference--cull-string
+   result
+   ;; ] + SPC + ) :
+   "][[:blank:]])"
+   "])"))
 
 (defun wordreference--process-sense-string (str)
   "Remove unwanted characters from a context/sense string STR."
@@ -963,15 +956,11 @@ Word or phrase at point is determined by button text property."
 (defun wordreference-cull-brackets-from-entry (entry)
   "Cull any [bracketed] parts of a result ENTRY.
 Used by `wordreference--return-search-word'."
-  (save-match-data
-    (while (string-match
-            ;; SPC + possible "+" + [anything], lazy match
-            " \\(\\+ \\)?\\[.*?\\]"
-            entry)
-      (setq entry (replace-match
-                   ""
-                   t nil entry))))
-  entry)
+  (wordreference--cull-string
+   entry
+   ;; SPC + possible "+" + [anything], lazy match
+   " \\(\\+ \\)?\\[.*?\\]"
+   ""))
 
 (defun wordreference-unpropertize-source-phrase-in-target (entry)
   "Remove properties from any source phrase in ENTRY."

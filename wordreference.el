@@ -204,10 +204,8 @@ The elements are formatted as follows: \"Spanish-English\" \"esen\" \"es\" \"en\
      'source-full (car langs-split)
      'target-full (cadr langs-split)
      'source-target (dom-attr lang 'id)
-     'source (substring (dom-attr lang 'id)
-                        0 2)
-     'target (substring (dom-attr lang 'id)
-                        2 4))))
+     'source (substring (dom-attr lang 'id) 0 2)
+     'target (substring (dom-attr lang 'id) 2 4))))
 
 (defun wordreference--construct-url (source target word)
   "Construct query URL for WORD from SOURCE to TARGET."
@@ -228,16 +226,11 @@ Optionally specify SOURCE and TARGET languages."
 
 (defun wordreference--parse-async (_status word source target)
   "Callback to parse query response for WORD from SOURCE to TARGET language."
-  (let ((parsed
-         (with-current-buffer (current-buffer)
-           (goto-char (point-min))
-           (libxml-parse-html-region
-            (search-forward "\n\n") (point-max)))))
-    (wordreference-print-translation-buffer
-     word
-     parsed
-     source
-     target)))
+  (let ((parsed (with-current-buffer (current-buffer)
+                  (goto-char (point-min))
+                  (libxml-parse-html-region
+                   (search-forward "\n\n") (point-max)))))
+    (wordreference-print-translation-buffer word parsed source target)))
 
 (defun wordreference--get-tables (dom)
   "Get tables from parsed HTML response DOM."
@@ -820,9 +813,8 @@ From SOURCE language to TARGET language, as two letter language codes."
 (defun wordreference--parse-did-you-mean ()
   "Parse the html response and print suggested entries."
   (goto-char (point-min))
-  (when (save-excursion
-          ;; when we have some html:
-          (re-search-forward "<table" nil t))
+  ;; when we have some html:
+  (when (save-excursion (re-search-forward "<table" nil t))
     (let* ((parsed (libxml-parse-html-region
                     (progn (re-search-forward "\n\n")
                            (forward-line 2)
@@ -1096,7 +1088,6 @@ Really only works for single French terms."
                 (string= lang-pairs-abbrev
                          (plist-get plist 'source-target)))
               wordreference-languages-server-list)))
-
 
 (defun wordreference--get-region ()
   "Get current region for new search."

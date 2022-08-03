@@ -139,7 +139,9 @@ It must match the key of one of the dictionaries in `helm-dictionary-database'."
     (define-key map (kbd "d") #'wordreference-helm-dict-search)
     (define-key map (kbd "c") #'wordreference-browse-term-cntrl)
     (define-key map (kbd "l") #'wordreference-browse-term-linguee)
-    (define-key map (kbd "n") #'wordreference-nearby-entries-search)
+    (define-key map (kbd "N") #'wordreference-nearby-entries-search)
+    (define-key map (kbd "n") #'wordreference-next-entry)
+    (define-key map (kbd "p") #'wordreference-prev-entry)
     (define-key map (kbd ",") #'wordreference-previous-heading)
     (define-key map (kbd ".") #'wordreference-next-heading)
     (define-key map (kbd "RET") #'wordreference-return-search-word)
@@ -858,28 +860,45 @@ From SOURCE language to TARGET language, as two letter language codes."
           suggestions))
 
 ;; BUFFER, NAVIGATION etc.
-
-(defun wordreference-next-heading (&optional prev)
-  "Move point to next heading, or to PREV heading if given."
-  (interactive)
+(defun wordreference-next-property (property value &optional prev recenter)
+  "Move point to next PROPERTY matching VALUE.
+Optionally move to PREVious match, and optionally RECENTER the buffer."
   (save-match-data
     (let ((match
            (save-excursion
              (if prev
-                 (text-property-search-backward 'heading ;NB 27.1!
-                                                t t t)
-               (text-property-search-forward 'heading ;NB 27.1!
-                                             t t t)))))
+                 (text-property-search-backward property value ;NB 27.1!
+                                                t t)
+               (text-property-search-forward property value ;NB 27.1!
+                                             t t)))))
       (if match
           (progn
             (goto-char (prop-match-beginning match))
-            (recenter-top-bottom 3))
-        (message "No more headings.")))))
+            (when recenter
+              (recenter-top-bottom 3)))
+        (if (eq property 'heading)
+            (message "No more headings.")
+          (message "No more entries."))))))
+
+(defun wordreference-next-entry ()
+  "Move point to next entry."
+  (interactive)
+  (wordreference-next-property 'type 'source))
+
+(defun wordreference-prev-entry ()
+  "Move point to previous entry."
+  (interactive)
+  (wordreference-next-property 'type 'source :prev))
+
+(defun wordreference-next-heading ()
+  "Move point to next heading."
+  (interactive)
+  (wordreference-next-property 'heading t nil :recenter))
 
 (defun wordreference-previous-heading ()
   "Move point to previous heading."
   (interactive)
-  (wordreference-next-heading :prev))
+  (wordreference-next-property 'heading t :prev :recenter))
 
 (defun wordreference--make-buttons ()
   "Make all property ranges with button property into buttons."

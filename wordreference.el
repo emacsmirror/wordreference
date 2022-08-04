@@ -1133,7 +1133,7 @@ With a PREFIX arg, prompt for source and target language pair."
                         wordreference-source-lang)))) ; fallback
          (target (or target
                      (if prefix
-                         (completing-read "To source: "
+                         (completing-read "To target: "
                                           wordreference-languages-full
                                           nil
                                           t)

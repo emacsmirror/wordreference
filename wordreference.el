@@ -1123,28 +1123,32 @@ Optionally specify WORD, SOURCE and TARGET languages.
 With a PREFIX arg, prompt for source and target language pair."
   (interactive "P")
   (let* ((source (or source             ;from lisp
-                     (if prefix         ;prefix arg
-                         (completing-read "From source: "
-                                          wordreference-languages-full
-                                          nil
-                                          t)
-                       (or ;; prev search
-                        (wordreference-get-results-info-item 'source)
-                        wordreference-source-lang)))) ; fallback
+                     (wordreference--prompt-lang 'source prefix)))
          (target (or target
-                     (if prefix
-                         (completing-read "To target: "
-                                          wordreference-languages-full
-                                          nil
-                                          t)
-                       (or (wordreference-get-results-info-item 'target)
-                           wordreference-target-lang))))
+                     (wordreference--prompt-lang 'target prefix)))
+
          (region (wordreference--get-region))
          (word (or word
                    (read-string (format "Wordreference search (%s): "
                                         (or region (current-word) ""))
                                 nil nil (or region (current-word))))))
     (wordreference--retrieve-parse-html word source target)))
+
+(defun wordreference--prompt-lang (type prefix)
+  "Prompt for lang of TYPE 'source or 'target.
+Prefix is the prefix arg test."
+  (if prefix
+      (completing-read (if (eql type 'source)
+                           "From source: "
+                         "To target: ")
+                       wordreference-languages-full
+                       nil
+                       t)
+    (or ;; prev search
+     (wordreference-get-results-info-item type)
+     (if (eql type 'source)
+         wordreference-source-lang
+       wordreference-target-lang))))
 
 (define-derived-mode wordreference-mode special-mode "wordreference"
   :group 'wordreference

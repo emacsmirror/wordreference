@@ -718,6 +718,16 @@ TERMS is plist of '((\"term\" \"conjunction-link\")).
    'help-echo (concat "Browse inflexion table for '"
                       term "'")))
 
+(defun wordreference--concat-also-found-string (also-found also-list)
+  ""
+  (if (not also-list)
+      ""
+    (concat "\n"
+            also-found
+            "\n"
+            (wordreference-insert-also-found-list
+             also-list))))
+
 (defun wordreference-print-also-found-entries (html)
   "Insert a propertized list of 'also found in' entries.
 HTML is what our original query returned."
@@ -738,20 +748,10 @@ HTML is what our original query returned."
     (when also-found
       (wordreference-print-heading also-found-heading)
       (insert
-       (if (not also-list-source)
-           ""
-         (concat "\n"
-                 also-found-source
-                 "\n"
-                 (wordreference-insert-also-found-list
-                  also-list-source)))
-       (if (not also-list-target)
-           ""
-         (concat "\n"
-                 also-found-target
-                 "\n"
-                 (wordreference-insert-also-found-list
-                  also-list-target)))
+       (wordreference--concat-also-found-string also-found-source
+                                                also-list-source)
+       (wordreference--concat-also-found-string also-found-target
+                                                also-list-target)
        "\n\n"))))
 
 (defun wordreference-insert-also-found-list (list)

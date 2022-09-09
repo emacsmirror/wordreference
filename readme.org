@@ -30,6 +30,7 @@ If you already have it set up, you can simply call =M-x package-install RET word
 - =c= to search same term on https://www.cntrl.fr (only works with well-formed French queries)
 - =l= to search the same term on https://www.linguee.com
 - =S= to swap source and target and search for same term again
+- =v= to immediately search most recent item in the kill ring.
 
 ** screenshot 
 

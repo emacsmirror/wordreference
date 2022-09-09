@@ -145,6 +145,7 @@ It must match the key of one of the dictionaries in `helm-dictionary-database'."
     (define-key map (kbd ",") #'wordreference-previous-heading)
     (define-key map (kbd ".") #'wordreference-next-heading)
     (define-key map (kbd "RET") #'wordreference-return-search-word)
+    (define-key map (kbd "v") #'wordreference-paste-to-search)
     (define-key map (kbd "S") #'wordreference-switch-source-target-and-search)
     map)
   "Keymap for wordreference mode.")
@@ -1115,6 +1116,11 @@ Really only works for single French terms."
     (when (use-region-p)
       (buffer-substring-no-properties (region-beginning)
                                       (region-end)))))
+
+(defun wordreference-paste-to-search (&optional prefix)
+  "Call `wordreference-search' with the most recent killed text as input."
+  (interactive)
+  (wordreference-search prefix (current-kill 0)))
 
 ;;;###autoload
 (defun wordreference-search (&optional prefix word source target)

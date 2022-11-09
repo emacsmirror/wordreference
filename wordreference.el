@@ -229,7 +229,8 @@ Optionally specify SOURCE and TARGET languages."
                   'wordreference--parse-async (list word source target calling-buffer))))
 
 (defun wordreference--parse-async (_status word source target buffer)
-  "Callback to parse query response for WORD from SOURCE to TARGET language."
+  "Callback to parse query response for WORD from SOURCE to TARGET language.
+BUFFER is the buffer that was current when we invoked the wordreference command."
   (let ((parsed (with-current-buffer (current-buffer)
                   (goto-char (point-min))
                   (libxml-parse-html-region
@@ -558,7 +559,7 @@ TRS is the list of table rows from the parsed HTML."
 (defun wordreference--cull-single-spaces-in-brackets (result)
   "Remove any spaces inside brackets from RESULT."
   (wordreference--cull-string
-   result 
+   result
    ;; alternative mega regex :
    ;; (we name both our groups 2 to always catch the match)
    "\\(([[:blank:]]+\\(?2:.*[[:alnum:]$]\\)[[:blank:]]?)\\|(\\(?2:.*?\\)[[:blank:]]+)\\)"
@@ -723,7 +724,7 @@ TERMS is plist of '((\"term\" \"conjunction-link\")).
                       term "'")))
 
 (defun wordreference--concat-also-found-string (also-found also-list)
-  ""
+  "Concatenate ALSO-FOUND heading and ALSO-LIST."
   (if (not also-list)
       ""
     (concat "\n"
@@ -812,7 +813,7 @@ From SOURCE language to TARGET language, as two letter language codes."
                  source target "&w=" word)))
     (url-retrieve
      url
-     (lambda (status)
+     (lambda (_status)
        (wordreference--parse-did-you-mean)))))
 
 (defun wordreference--parse-did-you-mean ()
@@ -866,7 +867,7 @@ From SOURCE language to TARGET language, as two letter language codes."
 ;; BUFFER, NAVIGATION etc.
 (defun wordreference-next-property (property value &optional prev recenter)
   "Move point to next PROPERTY matching VALUE.
-Optionally move to PREVious match, and optionally RECENTER the buffer."
+Optionally move to PREV ious match, and optionally RECENTER the buffer."
   (save-match-data
     (let ((match
            (save-excursion
@@ -1121,7 +1122,8 @@ Really only works for single French terms."
                                       (region-end)))))
 
 (defun wordreference-paste-to-search (&optional prefix)
-  "Call `wordreference-search' with the most recent killed text as input."
+  "Call `wordreference-search' with the most recent killed text as input.
+PREFIX is same as for that function."
   (interactive)
   (wordreference-search prefix (current-kill 0)))
 
@@ -1145,7 +1147,7 @@ With a PREFIX arg, prompt for source and target language pair."
 
 (defun wordreference--prompt-lang (type prefix)
   "Prompt for lang of TYPE 'source or 'target.
-Prefix is the prefix arg test."
+PREFIX is the prefix arg test."
   (if prefix
       (completing-read (if (eql type 'source)
                            "From source: "

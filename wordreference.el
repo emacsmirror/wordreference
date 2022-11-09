@@ -223,17 +223,18 @@ The elements are formatted as follows: \"Spanish-English\" \"esen\" \"es\" \"en\
 (defun wordreference--retrieve-parse-html (word &optional source target)
   "Query wordreference.com for WORD, and parse the HTML response.
 Optionally specify SOURCE and TARGET languages."
-  (let* ((url (wordreference--construct-url source target word)))
+  (let* ((url (wordreference--construct-url source target word))
+         (calling-buffer (current-buffer)))
     (url-retrieve url
-                  'wordreference--parse-async (list word source target))))
+                  'wordreference--parse-async (list word source target calling-buffer))))
 
-(defun wordreference--parse-async (_status word source target)
+(defun wordreference--parse-async (_status word source target buffer)
   "Callback to parse query response for WORD from SOURCE to TARGET language."
   (let ((parsed (with-current-buffer (current-buffer)
                   (goto-char (point-min))
                   (libxml-parse-html-region
                    (search-forward "\n\n") (point-max)))))
-    (wordreference-print-translation-buffer word parsed source target)))
+    (wordreference-print-translation-buffer word parsed source target buffer)))
 
 (defun wordreference--get-tables (dom)
   "Get tables from parsed HTML response DOM."
@@ -409,10 +410,11 @@ example for an example, and other for everything else."
 
 ;; PRINTING:
 
-(defun wordreference-print-translation-buffer (word html-parsed &optional source target)
+(defun wordreference-print-translation-buffer (word html-parsed &optional source target buffer)
   "Print translation results in buffer.
 WORD is the search query, HTML-PARSED is what our query returned.
-SOURCE and TARGET are languages."
+SOURCE and TARGET are languages.
+BUFFER is the buffer that was current when we invoked the wordreference command."
   (with-current-buffer (get-buffer-create "*wordreference*")
     (let* ((inhibit-read-only t)
            (tables (wordreference--get-tables html-parsed))
@@ -477,7 +479,8 @@ SOURCE and TARGET are languages."
       (wordreference-prop-query-in-results word)
       (goto-char (point-min))))
   ;; handle searching again from wr:
-  (unless (equal (buffer-name (current-buffer)) "*wordreference*")
+  ;; because this is a callback, `current-buffer' = http response
+  (unless (equal (buffer-name buffer) "*wordreference*")
     (switch-to-buffer-other-window (get-buffer "*wordreference*")))
   (message "w/s: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms, C: copy search term, n: browse nearby entries, S: switch langs and search, l: search with linguee.com, c: browse on www.cntrl.fr."))
 

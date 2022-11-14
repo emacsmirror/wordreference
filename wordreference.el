@@ -48,13 +48,6 @@
 (when (require 'pdf-tools nil :no-error)
   (declare-function pdf-view-active-region-text "pdf-view"))
 
-(when (require 'helm-dictionary nil :noerror)
-  (declare-function helm-dictionary "helm-dictionary")
-  (defvar helm-dictionary-database)
-  (defvar wordreference-helm-dictionary-name "fr-en"
-    "The name of the dictionary to use for `helm-dictionary' queries.\
-It must match the key of one of the dictionaries in `helm-dictionary-database'."))
-
 (defgroup wordreference nil
   "Wordreference dictionary interface."
   :group 'wordreference)
@@ -136,7 +129,8 @@ It must match the key of one of the dictionaries in `helm-dictionary-database'."
     (define-key map (kbd "w") #'wordreference-search)
     (define-key map (kbd "b") #'wordreference-browse-url-results)
     (define-key map (kbd "C") #'wordreference-copy-search-term)
-    (define-key map (kbd "d") #'wordreference-helm-dict-search)
+    (when (require 'helm-dictionary nil :no-error)
+      (define-key map (kbd "d") #'wordreference-helm-dict-search))
     (define-key map (kbd "c") #'wordreference-browse-term-cntrl)
     (define-key map (kbd "l") #'wordreference-browse-term-linguee)
     (define-key map (kbd "N") #'wordreference-nearby-entries-search)
@@ -1043,17 +1037,17 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
                                nil)))
     (wordreference-search nil word)))
 
-;; NB: runs on a modified `helm-dictionary'!:
-(defun wordreference-helm-dict-search ()
-  "Search for term in `helm-dictionary'.
-\nUses the dictionary specified in `wordreference-helm-dictionary-name'."
-  (interactive)
-  (let ((query (concat "\\b"
-                       (wordreference-get-results-info-item 'term)
-                       "\\b")))
-    (wordreference-helm-dictionary wordreference-helm-dictionary-name query t)))
-
 (when (require 'helm-dictionary nil :no-error)
+  (when (require 'helm-dictionary nil :noerror)
+    (declare-function helm-dictionary "helm-dictionary")
+    (declare-function helm-dictionary-build "helm-dictionary")
+    (declare-function helm "helm")
+    (defvar helm-dictionary-database)
+    (defvar helm-source-dictionary-online)
+    (defvar wordreference-helm-dictionary-name "fr-en"
+      "The name of the dictionary to use for `helm-dictionary' queries.
+It must match one of the dictionaries in `helm-dictionary-database'."))
+
   (defun wordreference-helm-dictionary (&optional dict-name query not-full)
     "Load our modified version of `helm-dictionary'.
 Optionally, use only dictionary DICT-NAME and provide input QUERY.
@@ -1075,7 +1069,17 @@ NOT-FULL means to not display in full-frame."
             :default input
             :input (when query input)
             :candidate-number-limit 500
-            :buffer "*helm dictionary*"))))
+            :buffer "*helm dictionary*")))
+
+  ;; NB: runs on a modified `helm-dictionary'!:
+  (defun wordreference-helm-dict-search ()
+    "Search for term in `helm-dictionary'.
+\nUses the dictionary specified in `wordreference-helm-dictionary-name'."
+    (interactive)
+    (let ((query (concat "\\b"
+                         (wordreference-get-results-info-item 'term)
+                         "\\b")))
+      (wordreference-helm-dictionary wordreference-helm-dictionary-name query t))))
 
 (defun wordreference-browse-term-cntrl ()
   "Search for the same term on https://www.cntrl.fr.

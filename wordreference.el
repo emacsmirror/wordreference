@@ -1110,14 +1110,11 @@ Really only works for single French terms."
   (declare-function reverso--translate "reverso")
   (declare-function reverso--translate-render "reverso")
   (declare-function reverso--with-buffer "reverso")
+
   (defun wordreference-browse-term-reverso ()
     "Search for current term with reverso.com"
     (interactive)
     (let* ((query (wordreference-get-results-info-item 'term))
-           (query-split (split-string query " "))
-           (query-final (if (not (> (length query-split) 1))
-                            query
-                          (string-join query-split "+")))
            (source (intern
                     (downcase
                      (wordreference-get-results-info-item 'source-full))))
@@ -1126,14 +1123,14 @@ Really only works for single French terms."
                      (wordreference-get-results-info-item 'target-full)))))
       (type-of source)
       (reverso--translate
-       query-final
+       query
        source
        target
        (lambda (data)
          (reverso--with-buffer
            ;; (if is-brief
-           ;; (reverso--translate-render-brief input data)
-           (reverso--translate-render query-final data)))))))
+           ;; (reverso--translate-render-brief query data)
+           (reverso--translate-render query data)))))))
 
 (defun wordreference--fetch-lang-info-from-abbrev (source target)
   "Use two-letter SOURCE and TARGET abbrevs to collect full language pair.

@@ -142,6 +142,8 @@ It must match the key of one of the dictionaries in `helm-dictionary-database'."
     (define-key map (kbd "N") #'wordreference-nearby-entries-search)
     (define-key map (kbd "n") #'wordreference-next-entry)
     (define-key map (kbd "p") #'wordreference-prev-entry)
+    (when (require 'reverso nil :no-error)
+      (define-key map (kbd "r") #'wordreference-browse-term-reverso))
     (define-key map (kbd ",") #'wordreference-previous-heading)
     (define-key map (kbd ".") #'wordreference-next-heading)
     (define-key map (kbd "RET") #'wordreference-return-search-word)
@@ -1099,6 +1101,35 @@ Really only works for single French terms."
                          lang-pair-full
                          "/search?query="
                          query-final))))
+
+(when (require 'reverso nil :no-error)
+  (declare-function reverso--translate "reverso")
+  (declare-function reverso--translate-render "reverso")
+  (declare-function reverso--with-buffer "reverso")
+  (defun wordreference-browse-term-reverso ()
+    "Search for current term with reverso.com"
+    (interactive)
+    (let* ((query (wordreference-get-results-info-item 'term))
+           (query-split (split-string query " "))
+           (query-final (if (not (> (length query-split) 1))
+                            query
+                          (string-join query-split "+")))
+           (source (intern
+                    (downcase
+                     (wordreference-get-results-info-item 'source-full))))
+           (target (intern
+                    (downcase
+                     (wordreference-get-results-info-item 'target-full)))))
+      (type-of source)
+      (reverso--translate
+       query-final
+       source
+       target
+       (lambda (data)
+         (reverso--with-buffer
+           ;; (if is-brief
+           ;; (reverso--translate-render-brief input data)
+           (reverso--translate-render query-final data)))))))
 
 (defun wordreference--fetch-lang-info-from-abbrev (source target)
   "Use two-letter SOURCE and TARGET abbrevs to collect full language pair.

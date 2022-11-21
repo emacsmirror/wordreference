@@ -132,6 +132,8 @@
     (when (require 'helm-dictionary nil :no-error)
       (define-key map (kbd "d") #'wordreference-helm-dict-search))
     (define-key map (kbd "c") #'wordreference-browse-term-cntrl)
+    (when (require 'sdcv nil :no-error))
+    (define-key map (kbd "L") #'wordreference-browse-term-sdcv-littre)
     (define-key map (kbd "l") #'wordreference-browse-term-linguee)
     (define-key map (kbd "N") #'wordreference-nearby-entries-search)
     (define-key map (kbd "n") #'wordreference-next-entry)
@@ -1089,6 +1091,15 @@ Really only works for single French terms."
   (let ((query (wordreference-get-results-info-item 'term)))
     (browse-url-generic (concat "https://www.cnrtl.fr/definition/"
                                 query))))
+
+(when (require 'sdcv nil :noerror)
+  (defun wordreference-browse-term-sdcv-littre ()
+    "Search for current term in `sdcv' using XMLittre dictionary.
+Requires `sdcv' to be installed, and the XMLittre dictionary."
+    (interactive)
+    (let ((term (plist-get wordreference-results-info 'term))
+          (sdcv-dictionary-complete-list '("XMLittre")))
+      (sdcv-search-detail term))))
 
 (defun wordreference-browse-term-linguee ()
   "Search for current term in browser with Linguee.com."

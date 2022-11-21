@@ -1037,7 +1037,7 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
                                nil)))
     (wordreference-search nil word)))
 
-(when (require 'helm-dictionary nil :no-error)
+(when (require 'helm nil :no-error)
   (when (require 'helm-dictionary nil :noerror)
     (declare-function helm-dictionary "helm-dictionary")
     (declare-function helm-dictionary-build "helm-dictionary")

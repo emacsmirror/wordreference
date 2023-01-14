@@ -48,13 +48,6 @@
 (when (require 'pdf-tools nil :no-error)
   (declare-function pdf-view-active-region-text "pdf-view"))
 
-(when (require 'helm-dictionary nil :noerror)
-  (declare-function helm-dictionary "helm-dictionary")
-  (defvar helm-dictionary-database)
-  (defvar wordreference-helm-dictionary-name "fr-en"
-    "The name of the dictionary to use for `helm-dictionary' queries.\
-It must match the key of one of the dictionaries in `helm-dictionary-database'."))
-
 (defgroup wordreference nil
   "Wordreference dictionary interface."
   :group 'wordreference)
@@ -136,12 +129,17 @@ It must match the key of one of the dictionaries in `helm-dictionary-database'."
     (define-key map (kbd "w") #'wordreference-search)
     (define-key map (kbd "b") #'wordreference-browse-url-results)
     (define-key map (kbd "C") #'wordreference-copy-search-term)
-    (define-key map (kbd "d") #'wordreference-helm-dict-search)
+    (when (require 'helm-dictionary nil :no-error)
+      (define-key map (kbd "d") #'wordreference-helm-dict-search))
     (define-key map (kbd "c") #'wordreference-browse-term-cntrl)
+    (when (require 'sdcv nil :no-error))
+    (define-key map (kbd "L") #'wordreference-browse-term-sdcv-littre)
     (define-key map (kbd "l") #'wordreference-browse-term-linguee)
     (define-key map (kbd "N") #'wordreference-nearby-entries-search)
     (define-key map (kbd "n") #'wordreference-next-entry)
     (define-key map (kbd "p") #'wordreference-prev-entry)
+    (when (require 'reverso nil :no-error)
+      (define-key map (kbd "r") #'wordreference-browse-term-reverso))
     (define-key map (kbd ",") #'wordreference-previous-heading)
     (define-key map (kbd ".") #'wordreference-next-heading)
     (define-key map (kbd "RET") #'wordreference-return-search-word)
@@ -1041,17 +1039,17 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
                                nil)))
     (wordreference-search nil word)))
 
-;; NB: runs on a modified `helm-dictionary'!:
-(defun wordreference-helm-dict-search ()
-  "Search for term in `helm-dictionary'.
-\nUses the dictionary specified in `wordreference-helm-dictionary-name'."
-  (interactive)
-  (let ((query (concat "\\b"
-                       (wordreference-get-results-info-item 'term)
-                       "\\b")))
-    (wordreference-helm-dictionary wordreference-helm-dictionary-name query t)))
+(when (require 'helm nil :no-error)
+  (when (require 'helm-dictionary nil :noerror)
+    (declare-function helm-dictionary "helm-dictionary")
+    (declare-function helm-dictionary-build "helm-dictionary")
+    (declare-function helm "helm")
+    (defvar helm-dictionary-database)
+    (defvar helm-source-dictionary-online)
+    (defvar wordreference-helm-dictionary-name "fr-en"
+      "The name of the dictionary to use for `helm-dictionary' queries.
+It must match one of the dictionaries in `helm-dictionary-database'."))
 
-(when (require 'helm-dictionary nil :no-error)
   (defun wordreference-helm-dictionary (&optional dict-name query not-full)
     "Load our modified version of `helm-dictionary'.
 Optionally, use only dictionary DICT-NAME and provide input QUERY.
@@ -1073,7 +1071,17 @@ NOT-FULL means to not display in full-frame."
             :default input
             :input (when query input)
             :candidate-number-limit 500
-            :buffer "*helm dictionary*"))))
+            :buffer "*helm dictionary*")))
+
+  ;; NB: runs on a modified `helm-dictionary'!:
+  (defun wordreference-helm-dict-search ()
+    "Search for term in `helm-dictionary'.
+\nUses the dictionary specified in `wordreference-helm-dictionary-name'."
+    (interactive)
+    (let ((query (concat "\\b"
+                         (wordreference-get-results-info-item 'term)
+                         "\\b")))
+      (wordreference-helm-dictionary wordreference-helm-dictionary-name query t))))
 
 (defun wordreference-browse-term-cntrl ()
   "Search for the same term on https://www.cntrl.fr.
@@ -1083,6 +1091,15 @@ Really only works for single French terms."
   (let ((query (wordreference-get-results-info-item 'term)))
     (browse-url-generic (concat "https://www.cnrtl.fr/definition/"
                                 query))))
+
+(when (require 'sdcv nil :noerror)
+  (defun wordreference-browse-term-sdcv-littre ()
+    "Search for current term in `sdcv' using XMLittre dictionary.
+Requires `sdcv' to be installed, and the XMLittre dictionary."
+    (interactive)
+    (let ((term (plist-get wordreference-results-info 'term))
+          (sdcv-dictionary-complete-list '("XMLittre")))
+      (sdcv-search-detail term))))
 
 (defun wordreference-browse-term-linguee ()
   "Search for current term in browser with Linguee.com."
@@ -1099,6 +1116,32 @@ Really only works for single French terms."
                          lang-pair-full
                          "/search?query="
                          query-final))))
+
+(when (require 'reverso nil :no-error)
+  (declare-function reverso--translate "reverso")
+  (declare-function reverso--translate-render "reverso")
+  (declare-function reverso--with-buffer "reverso")
+
+  (defun wordreference-browse-term-reverso ()
+    "Search for current term with reverso.com"
+    (interactive)
+    (let* ((query (wordreference-get-results-info-item 'term))
+           (source (intern
+                    (downcase
+                     (wordreference-get-results-info-item 'source-full))))
+           (target (intern
+                    (downcase
+                     (wordreference-get-results-info-item 'target-full)))))
+      (type-of source)
+      (reverso--translate
+       query
+       source
+       target
+       (lambda (data)
+         (reverso--with-buffer
+           ;; (if is-brief
+           ;; (reverso--translate-render-brief query data)
+           (reverso--translate-render query data)))))))
 
 (defun wordreference--fetch-lang-info-from-abbrev (source target)
   "Use two-letter SOURCE and TARGET abbrevs to collect full language pair.

@@ -257,7 +257,7 @@ BUFFER is the buffer that was current when we invoked the wordreference command.
   "Get all word tables from list of TABLES."
   (let ((word-tables))
     (dolist (x tables (reverse word-tables))
-      (when (equal (dom-attr x 'class) "WRD")
+      (when (string-prefix-p "WRD" (dom-attr x 'class))
         (push x word-tables)))))
 
 (defun wordreference--get-trs (word-table)

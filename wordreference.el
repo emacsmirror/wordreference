@@ -145,6 +145,7 @@
     (define-key map (kbd "RET") #'wordreference-return-search-word)
     (define-key map (kbd "v") #'wordreference-paste-to-search)
     (define-key map (kbd "S") #'wordreference-switch-source-target-and-search)
+    (define-key map (kbd "r") #'wordreference-browse-term-reverso)
     map)
   "Keymap for wordreference mode.")
 
@@ -481,7 +482,7 @@ BUFFER is the buffer that was current when we invoked the wordreference command.
   ;; because this is a callback, `current-buffer' = http response
   (unless (equal (buffer-name buffer) "*wordreference*")
     (switch-to-buffer-other-window (get-buffer "*wordreference*")))
-  (message "w/s: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms, C: copy search term, n: browse nearby entries, S: switch langs and search, l: search with linguee.com, c: browse on www.cntrl.fr."))
+  (message "w/s: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms, C: copy search term, n: browse nearby entries, S: switch langs and search, l: search with linguee.com, c: browse on www.cntrl.fr, r: search with reverso.el."))
 
 (defun wordreference-prop-query-in-results (query)
   "Propertize string QUERY in results buffer."

@@ -1159,7 +1159,7 @@ Requires `sdcv' to be installed, and the XMLittre dictionary."
 (defun wordreference--get-region ()
   "Get current region for new search."
   (if (and (equal major-mode 'pdf-view-mode)
-           (region-active-p))
+           (pdf-view-active-region-p))
       (car (pdf-view-active-region-text))
     (when (use-region-p)
       (buffer-substring-no-properties (region-beginning)

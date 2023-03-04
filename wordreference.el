@@ -575,13 +575,14 @@ TRS is the list of table rows from the parsed HTML."
 (defun wordreference--process-sense-string (str)
   "Remove unwanted characters from a context/sense string STR."
   (when str
-    (string-trim
-     (s-collapse-whitespace
-      (wordreference--cull-single-spaces-in-brackets
-       (wordreference--cull-space-between-brackets
-        str)))
-     "[ \\t\\n\\r ]+" ;; add our friend  
-     "[ \\t\\n\\r ]+")))
+    (thread-first
+      str
+      (wordreference--cull-space-between-brackets)
+      (wordreference--cull-single-spaces-in-brackets)
+      (s-collapse-whitespace)
+      (string-trim
+       "[ \\t\\n\\r ]+" ;; add our friend  
+       "[ \\t\\n\\r ]+"))))
 
 (defun wordreference-print-single-definition (def)
   "Print a single definition DEF in the buffer.

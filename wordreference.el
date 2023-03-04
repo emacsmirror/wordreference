@@ -337,9 +337,10 @@ followed by a list of textual results returned by
     (cl-loop
      for x in text-string-split
      when x
-     collect (wordreference--cull-conj-arrows
-              (s-collapse-whitespace
-               (string-trim x))))))
+     collect (thread-first x
+                           (string-trim)
+                           (s-collapse-whitespace)
+                           (wordreference--cull-conj-arrows)))))
 
 (defun wordreference-build-to-fr-td (td)
   "Build a TD when it is of type FrWrd or ToWrd."
@@ -518,9 +519,10 @@ BUFFER is the buffer that was current when we invoked the wordreference command.
 (defun wordreference-print-tables (tables)
   "Print a list of TABLES."
   (cl-loop for x in tables
-           collect (wordreference-print-trs-results
-                    (wordreference-collect-trs-results-list
-                     (wordreference--get-trs x)))))
+           collect (thread-first x
+                                 (wordreference--get-trs)
+                                 (wordreference-collect-trs-results-list)
+                                 (wordreference-print-trs-results))))
 
 (defun wordreference-print-trs-results (trs)
   "Print a section heading followed by its definitions.

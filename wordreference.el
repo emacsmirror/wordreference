@@ -3,7 +3,7 @@
 ;; Author: Marty Hiatt <martianhiatus AT riseup.net>
 ;; Copyright (C) 2022 Marty Hiatt <martianhiatus AT riseup.net>
 ;;
-;; Package-Requires: ((emacs "27.1") (s "1.12.0"))
+;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: convenience, translate, wp, dictionary
 ;; URL: https://codeberg.org/martianh/wordreference.el
 ;; Version: 0.2
@@ -36,7 +36,6 @@
 ;; nb: wr requires a user agent to return a request.
 ;; TODO: (offer to?) set a privacy friendly user agent, cookies settings, etc.
 
-(require 's)
 (require 'xml)
 (require 'dom)
 (require 'shr)
@@ -339,7 +338,7 @@ followed by a list of textual results returned by
      when x
      collect (thread-first x
                            (string-trim)
-                           (s-collapse-whitespace)
+                           (string-clean-whitespace)
                            (wordreference--cull-conj-arrows)))))
 
 (defun wordreference-build-to-fr-td (td)
@@ -581,7 +580,7 @@ TRS is the list of table rows from the parsed HTML."
       str
       (wordreference--cull-space-between-brackets)
       (wordreference--cull-single-spaces-in-brackets)
-      (s-collapse-whitespace)
+      (string-clean-whitespace)
       (string-trim
        "[ \\t\\n\\r ]+" ;; add our friend  
        "[ \\t\\n\\r ]+"))))
@@ -741,11 +740,11 @@ HTML is what our original query returned."
   (let* ((also-found (dom-by-id html "FTintro"))
          (also-found-heading (string-trim (dom-texts also-found)))
          (also-found-langs (dom-by-class html "FTsource"))
-         (also-found-source (s-replace
+         (also-found-source (string-replace
                              " " ""
                              (string-trim
                               (dom-texts (car also-found-langs)))))
-         (also-found-target (s-replace
+         (also-found-target (string-replace
                              " " ""
                              (string-trim
                               (dom-texts (cdr also-found-langs)))))

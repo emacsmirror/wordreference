@@ -144,9 +144,32 @@
     (define-key map (kbd "RET") #'wordreference-return-search-word)
     (define-key map (kbd "v") #'wordreference-paste-to-search)
     (define-key map (kbd "S") #'wordreference-switch-source-target-and-search)
-    (define-key map (kbd "r") #'wordreference-browse-term-reverso)
+    (define-key map (kbd "?") #'wordreference-dispatch)
     map)
   "Keymap for wordreference mode.")
+
+(transient-define-prefix wordreference-dispatch ()
+  "wordreference results commands"
+  ["wordreference results commands"
+   [("TAB" "next button" forward-button)
+    ("<backtab>" "previous button" backward-button)
+    ("s" "search" wordreference-search)
+    ("w" "search" wordreference-search)
+    ("b" "browse online" wordreference-browse-url-results)
+    ("C" "copy search term" wordreference-copy-search-term)
+    ("d" "search in helm dictionary" wordreference-helm-dict-search)]
+   [("c" "search on CNTRL" wordreference-browse-term-cntrl)
+    ("L" "search with sdcv littré" wordreference-browse-term-sdcv-littre)
+    ("l" "search with linguee" wordreference-browse-term-linguee)
+    ("N" "view nearby entries" wordreference-nearby-entries-search)
+    ("n" "next entry" wordreference-next-entry)
+    ("p" "previous entry" wordreference-prev-entry)
+    ("r" "search with reverso" wordreference-browse-term-reverso)]
+   [("," "previous heading" wordreference-previous-heading)
+    ("." "next heading" wordreference-next-heading)
+    ("RET" "search term at point" wordreference-return-search-word)
+    ("v" "paste and search" wordreference-paste-to-search)
+    ("S" "switch source/target" wordreference-switch-source-target-and-search)]])
 
 (defvar wordreference-result-search-map
   (let ((map (make-sparse-keymap)))

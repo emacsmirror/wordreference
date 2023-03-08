@@ -3,7 +3,7 @@
 ;; Author: Marty Hiatt <martianhiatus AT riseup.net>
 ;; Copyright (C) 2022 Marty Hiatt <martianhiatus AT riseup.net>
 ;;
-;; Package-Requires: ((emacs "27.1"))
+;; Package-Requires: ((emacs "28.1"))
 ;; Keywords: convenience, translate, wp, dictionary
 ;; URL: https://codeberg.org/martianh/wordreference.el
 ;; Version: 0.2

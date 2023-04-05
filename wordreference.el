@@ -1214,6 +1214,14 @@ With a PREFIX arg, prompt for source and target language pair."
                                 nil nil (or region (current-word))))))
     (wordreference--retrieve-parse-html word source target)))
 
+;;;###autoload
+(defun wordrerence-search-go ()
+  "Seach wordreference for current region or word at point."
+  (interactive)
+  (let ((word (or (wordreference--get-region)
+                  (current-word))))
+    (wordreference-search nil word)))
+
 (defun wordreference--prompt-lang (type prefix)
   "Prompt for lang of TYPE 'source or 'target.
 PREFIX is the prefix arg test."

@@ -1194,7 +1194,9 @@ Requires `sdcv' to be installed, and the XMLittre dictionary."
   "Call `wordreference-search' with the most recent killed text as input.
 PREFIX is same as for that function."
   (interactive)
-  (wordreference-search prefix (current-kill 0)))
+  (let ((term (current-kill 0)))
+    (add-to-history 'minibuffer-history term)
+    (wordreference-search prefix term)))
 
 ;;;###autoload
 (defun wordreference-search (&optional prefix word source target)

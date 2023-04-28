@@ -1028,10 +1028,14 @@ with a prefix arguemnt."
   "Open the current results in external browser.
 Uses `wordreference-browse-url-function' to decide which browser to use."
   (interactive)
-  (let* ((url (concat wordreference-base-url
+  (let* ((source (or (wordreference-get-results-info-item 'source)
+                     wordreference-source-lang))
+         (target (or (wordreference-get-results-info-item 'target)
+                     wordreference-target-lang))
+         (url (concat wordreference-base-url
                       (format "/%s%s/"
-                              wordreference-source-lang
-                              wordreference-target-lang)))
+                              source
+                              target)))
          (word (wordreference-get-results-info-item 'term))
          (search-url (concat url word))
          (browse-url-browser-function (or wordreference-browse-url-function

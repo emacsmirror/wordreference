@@ -375,13 +375,12 @@ followed by a list of textual results returned by
          (tooltip-text (dom-texts tooltip))
          (term-text-list (wordreference--process-term-text-list td))
          (conj-list (or (dom-by-class td "conjugate")
-                        '(("dummy"))))
+                        (make-list (length term-text-list)
+                                   '("dummy"))))
          (conj-list-links (cl-loop for x in conj-list
                                    collect (or (dom-attr x 'href) "")))
-         (term-conj-list
-          (cl-mapcar
-           #'list
-           term-text-list conj-list-links))
+         (term-conj-list (cl-mapcar #'list
+                                    term-text-list conj-list-links))
          ;;TODO: this is EN hardcoded, are is there usage for other langs?
          (usage-list (dom-by-class td "engusg"))
          (usage-link (dom-attr (car (dom-by-tag usage-list 'a))

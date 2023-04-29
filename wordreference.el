@@ -43,6 +43,7 @@
 (require 'thingatpt)
 (require 'text-property-search)
 (require 'cl-lib)
+(require 'transient)
 
 (when (require 'pdf-tools nil :no-error)
   (declare-function pdf-view-active-region-text "pdf-view"))
@@ -131,8 +132,8 @@
     (when (require 'helm-dictionary nil :no-error)
       (define-key map (kbd "d") #'wordreference-helm-dict-search))
     (define-key map (kbd "c") #'wordreference-browse-term-cntrl)
-    (when (require 'sdcv nil :no-error))
-    (define-key map (kbd "L") #'wordreference-browse-term-sdcv-littre)
+    (when (require 'sdcv nil :no-error)
+      (define-key map (kbd "L") #'wordreference-browse-term-sdcv-littre))
     (define-key map (kbd "l") #'wordreference-browse-term-linguee)
     (define-key map (kbd "N") #'wordreference-nearby-entries-search)
     (define-key map (kbd "n") #'wordreference-next-entry)
@@ -460,13 +461,10 @@ BUFFER is the buffer that was current when we invoked the wordreference command.
       ;; (setq wr-html html-parsed)
       ;; (setq wr-post-article post-article)
       ;; (setq wordreference-word-tables word-tables)
-      ;; (setq wr-comp-table comp-table)
-      ;; (setq wordreference-full-html html-parsed)
       ;; (setq wr-forum-links forum-links)
       ;; (setq wordreference-full-tables word-tables)
       ;; (setq wordreference-single-tr (caddr (wordreference--get-trs pr-table)))
       ;; (setq wordreference-full-pr-trs-list pr-trs-results-list)
-      ;; (setq wordreference-full-sup-trs-list sup-trs-results-list)
       (erase-buffer)
       (wordreference-mode)
       ;; print principle, supplementary, particule verbs, and compound tables:
@@ -1220,7 +1218,7 @@ With a PREFIX arg, prompt for source and target language pair."
     (wordreference--retrieve-parse-html word source target)))
 
 ;;;###autoload
-(defun wordrerence-search-go ()
+(defun wordreference-search-go ()
   "Seach wordreference for current region or word at point."
   (interactive)
   (let ((word (or (wordreference--get-region)

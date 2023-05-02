@@ -352,11 +352,13 @@ followed by a list of textual results returned by
 
 (defun wordreference--process-term-text-list (td)
   "Process the terms in TD as a list split on commas or semicolons."
-  (let ((text-string-split (split-string
-                            (if (dom-by-class td "FrWrd")
-                                (dom-texts (dom-by-tag td 'strong))
-                              (dom-text td))
-                            "[,;] ")))
+  (let* ((text-string (if (dom-by-class td "FrWrd")
+                          (dom-texts (dom-by-tag td 'strong)) ; only 'strong?
+                        (let ((text (dom-text td)))
+                          (if (equal text " ")
+                              (dom-texts td) ; "translation unavailable"
+                            text))))
+         (text-string-split (split-string text-string "[,;] ")))
     (cl-loop
      for x in text-string-split
      when x

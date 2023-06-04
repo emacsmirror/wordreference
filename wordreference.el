@@ -232,32 +232,42 @@ The elements are formatted as follows: \"Spanish-English\" \"esen\" \"es\" \"en\
      'source (substring (dom-attr lang 'id) 0 2)
      'target (substring (dom-attr lang 'id) 2 4))))
 
-(defun wordreference--construct-url (source target word)
-  "Construct query URL for WORD from SOURCE to TARGET."
+(defun wordreference--construct-url (source target word &optional collins)
+  "Construct query URL for WORD from SOURCE to TARGET.
+COLLINS means we are fetching collins dictionary data instead."
   (concat wordreference-base-url
-          (format "/%s%s/%s"
+          (format (concat (if collins "/dictionary/getcollins" "")
+                          "/%s%s/%s")
                   (or source
                       wordreference-source-lang)
                   (or target
                       wordreference-target-lang)
                   word)))
 
-(defun wordreference--retrieve-parse-html (word &optional source target)
+(defun wordreference--retrieve-parse-html (word &optional source target collins)
   "Query wordreference.com for WORD, and parse the HTML response.
-Optionally specify SOURCE and TARGET languages."
-  (let* ((url (wordreference--construct-url source target word))
+Optionally specify SOURCE and TARGET languages.
+COLLINS means we are fetching collins dictionary data instead."
+  (let* ((url (wordreference--construct-url source target word collins))
          (calling-buffer (current-buffer)))
     (url-retrieve url
-                  'wordreference--parse-async (list word source target calling-buffer))))
+                  'wordreference--parse-async
+                  (list word source target calling-buffer collins))))
 
-(defun wordreference--parse-async (_status word source target buffer)
-  "Callback to parse query response for WORD from SOURCE to TARGET language.
-BUFFER is the buffer that was current when we invoked the wordreference command."
+(defun wordreference--parse-async (_status word source target buffer
+                                           &optional collins)
+  "Parse query response for WORD from SOURCE to TARGET language.
+Callback for `wordreference--retrieve-parse-html'.
+BUFFER is the buffer that was current when we invoked the wordreference command.
+COLLINS means we are fetching collins dictionary data instead."
   (let ((parsed (with-current-buffer (current-buffer)
                   (goto-char (point-min))
                   (libxml-parse-html-region
                    (search-forward "\n\n") (point-max)))))
-    (wordreference-print-translation-buffer word parsed source target buffer)))
+    (if collins
+        ;; (progn (setq wr-parsed-coll parsed)
+        (wordreference-print-collins-dict parsed)
+      (wordreference-print-translation-buffer word parsed source target buffer))))
 
 (defun wordreference--get-tables (dom)
   "Get tables from parsed HTML response DOM."
@@ -434,6 +444,18 @@ example for an example, and other for everything else."
 
 
 ;;; PRINTING:
+(defun wordreference-print-collins-dict (parsed)
+  "Print collins dictionary results.
+PARSED is the data to use."
+  (with-current-buffer "*wordreference*"
+    (goto-char (point-max))
+    (let ((inhibit-read-only t)
+          (div (dom-by-class parsed "clickableHC")))
+      (wordreference-print-heading "Collins Dictionary:")
+      ;; TODO: parse Collins results
+      (insert "\n"
+              (dom-texts div)))
+    (goto-char (point-min))))
 
 (defun wordreference-print-translation-buffer (word html-parsed &optional source target buffer)
   "Print translation results in buffer.
@@ -506,7 +528,8 @@ BUFFER is the buffer that was current when we invoked the wordreference command.
   ;; because this is a callback, `current-buffer' = http response
   (unless (equal (buffer-name buffer) "*wordreference*")
     (switch-to-buffer-other-window (get-buffer "*wordreference*")))
-  (message "w/s: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms, C: copy search term, n: browse nearby entries, S: switch langs and search, l: search with linguee.com, c: browse on www.cntrl.fr, r: search with reverso.el."))
+  (message "w/s: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms, C: copy search term, n: browse nearby entries, S: switch langs and search, l: search with linguee.com, c: browse on www.cntrl.fr, r: search with reverso.el.")
+  (wordreference--retrieve-parse-html word source target :collins))
 
 (defun wordreference-prop-query-in-results (query)
   "Propertize string QUERY in results buffer."

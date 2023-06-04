@@ -476,8 +476,7 @@ BUFFER is the buffer that was current when we invoked the wordreference command.
         (insert "Hit 'S' to search again with languages reversed.\n\n")
         ;; if no results, print 'did you mean?' entries:
         (wordreference--fetch-did-you-mean word source target))
-      (if other-dicts
-          (wordreference--print-other-dicts other-dicts))
+      (wordreference--print-other-dicts other-dicts)
       ;; print list of term also found in these entries
       (wordreference-print-also-found-entries html-parsed)
       ;; print forums
@@ -783,15 +782,16 @@ TERMS is plist of '((\"term\" \"conjunction-link\")).
          (term (dom-texts (dom-by-class langen "hw"))) ; get POS also?
          (list (dom-by-tag langen 'ul))
          (list-ch (dom-children list)))
-    (wordreference-print-heading "Other Dictionaries:")
-    (insert "\n"
-            (propertize title
-                        'face font-lock-comment-face)
-            "\n"
-            term "\n")
-    (dolist (li list-ch)
-      (wordreference--format-other-dict-entry li)
-      (insert "\n\n"))))
+    (when list
+      (wordreference-print-heading "Other Dictionaries:")
+      (insert "\n"
+              (propertize title
+                          'face font-lock-comment-face)
+              "\n"
+              term "\n")
+      (dolist (li list-ch)
+        (wordreference--format-other-dict-entry li)
+        (insert "\n\n")))))
 
 (defun wordreference--concat-also-found-string (also-found also-list)
   "Concatenate ALSO-FOUND heading and ALSO-LIST."

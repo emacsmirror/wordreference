@@ -196,7 +196,7 @@
 (cl-defstruct (wordreference-example (:constructor wordreference-example-create))
   eg tooltip)
 
-;; REQUESTING AND PARSING
+;;; REQUESTING AND PARSING
 
 (defun wordreference--parse-html-buffer (html-buffer)
   "Parse the HTML-BUFFER response."
@@ -433,7 +433,7 @@ example for an example, and other for everything else."
          `(:other ,(dom-texts td)))))
 
 
-;; PRINTING:
+;;; PRINTING:
 
 (defun wordreference-print-translation-buffer (word html-parsed &optional source target buffer)
   "Print translation results in buffer.
@@ -887,7 +887,7 @@ From SOURCE language to TARGET language, as two letter language codes."
                                            x "'")))
           suggestions))
 
-;; BUFFER, NAVIGATION etc.
+;;; BUFFER, NAVIGATION etc.
 (defun wordreference-next-property (property value &optional prev recenter)
   "Move point to next PROPERTY matching VALUE.
 Optionally move to PREV ious match, and optionally RECENTER the buffer."

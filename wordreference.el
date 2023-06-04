@@ -112,9 +112,9 @@
 
 (defvar-local wordreference-results-info nil
   "A plist about the current results of a word reference search.
-\nUsed to store search term and language pair info from
+Used to store search term and language pair info from
 `wordreference-languages-server-list'.
-\nIts form is like this:
+Its form is like this:
 \"(term \"word\" langs-full \"English-French\" source-full
 \"English\" target-full \"French\" source-target \"enfr\" source
 \"en\" target \"fr\")\"")
@@ -308,7 +308,7 @@ COLLINS means we are fetching collins dictionary data instead."
 
 (defun wordreference-collect-trs-results-list (trs)
   "Process the results found in TRS.
-\nReturns a nested list first containing information about the
+Returns a nested list first containing information about the
 heading title, followed by source and target languages. This is
 followed by a list of textual results returned by
 `wordreference--build-tds-text-list'."
@@ -407,7 +407,7 @@ followed by a list of textual results returned by
 
 (defun wordreference-build-single-td-list (td)
   "Return textual result for a single TD.
-\nReturns a property list containing to or from term, position of
+Returns a property list containing to or from term, position of
 speech, tooltip info, and conjunction table for a result, an
 example for an example, and other for everything else."
   (cond ((or (dom-by-class td "ToWrd")
@@ -634,7 +634,7 @@ TRS is the list of table rows from the parsed HTML."
 
 (defun wordreference-print-single-definition (def)
   "Print a single definition DEF in the buffer.
-\nFor now a definition can be a set of source term, context term,
+For now a definition can be a set of source term, context term,
 and target term, or an example sentence."
   (cond ((wordreference-note-p (car def))
          (insert
@@ -722,7 +722,7 @@ and target term, or an example sentence."
 (defun wordreference--insert-terms-and-conj (terms source-or-target)
   "Print a string of results and their conjunction links if any.
 TERMS is plist of '((\"term\" \"conjunction-link\")).
-\n SOURCE-OR-TARGET is a symbol to be added as a type property."
+SOURCE-OR-TARGET is a symbol to be added as a type property."
   (mapconcat (lambda (x)
                (concat
                 (wordreference-propertize-result-term
@@ -744,7 +744,7 @@ TERMS is plist of '((\"term\" \"conjunction-link\")).
 
 (defun wordreference-propertize-result-term (term source-or-target)
   "Propertize result TERM in results buffer.
-\n SOURCE-OR-TARGET is a symbol to be added as a type property."
+SOURCE-OR-TARGET is a symbol to be added as a type property."
   (propertize
    term
    'button t
@@ -1085,7 +1085,7 @@ Used by `wordreference--return-search-word'."
 
 (defun wordreference-shr-browse-url-secondary ()
   "Browse URL link at point using `browse-url-secondary-browser-function'.
-\nI.e. usually an external browser. Used by
+I.e. usually an external browser. Used by
 `wordreference-link-map' to mandate external browser for those
 types of links, as `shr-browse-url' only uses one when called
 with a prefix arguemnt."

@@ -448,6 +448,7 @@ BUFFER is the buffer that was current when we invoked the wordreference command.
            (pr-trs (wordreference--get-trs pr-table))
            (pr-trs-results-list (wordreference-collect-trs-results-list pr-trs))
            (post-article (dom-by-id html-parsed "postArticle"))
+           (other-dicts (dom-by-id html-parsed "otherDicts"))
            (forum-heading (dom-by-id post-article "threadsHeader"))
            (forum-heading-string (dom-texts forum-heading))
            (forum-links (dom-children (dom-by-id post-article "lista_link")))
@@ -475,6 +476,8 @@ BUFFER is the buffer that was current when we invoked the wordreference command.
         (insert "Hit 'S' to search again with languages reversed.\n\n")
         ;; if no results, print 'did you mean?' entries:
         (wordreference--fetch-did-you-mean word source target))
+      (if other-dicts
+          (wordreference--print-other-dicts other-dicts))
       ;; print list of term also found in these entries
       (wordreference-print-also-found-entries html-parsed)
       ;; print forums
@@ -745,6 +748,50 @@ TERMS is plist of '((\"term\" \"conjunction-link\")).
    'mouse-face 'highlight
    'help-echo (concat "Browse inflexion table for '"
                       term "'")))
+
+(defun wordreference--format-other-dict-entry (li)
+  "Format other dictionary entry LI, based on each element's dom class."
+  (dolist (el (dom-children li))
+    (cond ((wordreference--class-equal el "arab headnumber")
+           (wordreference--insert-opertized-el el 'font-lock-builtin-face))
+          ((wordreference--class-equal el "ital")
+           (wordreference--insert-opertized-el el '(t :slant italic)))
+          ((wordreference--class-equal el "roman")
+           (wordreference--insert-opertized-el el 'font-lock-builtin-face))
+          ((wordreference--class-equal el "example phrase ex")
+           (wordreference--insert-opertized-el el 'default))
+          ((dom-by-class el "examplecontainer")
+           (wordreference--format-other-dict-entry  el)))))
+
+(defun wordreference--class-equal (el str)
+  "Non-nil if dom EL has class `equal' to STR."
+  (equal (dom-attr el 'class) str))
+
+(defun wordreference--insert-opertized-el (el face)
+  "Insert the text of EL propertized with FACE."
+  (insert (propertize (dom-text el)
+                      'face face)))
+
+(defun wordreference--print-other-dicts (dom)
+  "Print other dictionaries DOM."
+  (let* ((title
+          (dom-text
+           (dom-search dom
+                       (lambda (n) ; generalize this:
+                         (string-prefix-p "Wörterbuch" (dom-text n))))))
+         (langen (dom-by-class dom "entry langenscheidt")) ; generalize this
+         (term (dom-texts (dom-by-class langen "hw"))) ; get POS also?
+         (list (dom-by-tag langen 'ul))
+         (list-ch (dom-children list)))
+    (wordreference-print-heading "Other Dictionaries:")
+    (insert "\n"
+            (propertize title
+                        'face font-lock-comment-face)
+            "\n"
+            term "\n")
+    (dolist (li list-ch)
+      (wordreference--format-other-dict-entry li)
+      (insert "\n\n"))))
 
 (defun wordreference--concat-also-found-string (also-found also-list)
   "Concatenate ALSO-FOUND heading and ALSO-LIST."

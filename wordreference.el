@@ -444,15 +444,46 @@ example for an example, and other for everything else."
 
 
 ;;; PRINTING:
+
+
+;; (defun wordreference--format-collins-entry (elements)
+;;   "Format Collins dictionary entry ELEMENTS, based on each element's dom class."
+;;   (dolist (el (dom-children elements))
+;;     (cond ((stringp el)
+;;            (wordreference--insert-propertized-el el '(t :slant italic)))
+;;           ((wordreference--class-equal el "clickableHC")
+;;            (wordreference--insert-propertized-el el 'font-lock-builtin-face))
+;;           ((wordreference--class-equal el "ps")
+;;            (wordreference--insert-propertized-el el 'font-lock-builtin-face))
+;;           ((wordreference--class-equal el "phonetics")
+;;            (wordreference--insert-propertized-el el 'font-lock-builtin-face))
+;;           ((wordreference--class-equal el "hw")
+;;            (wordreference--insert-propertized-el el '(t :slant italic)))
+;;           ((wordreference--class-equal el "category")
+;;            (wordreference--insert-propertized-el el 'font-lock-builtin-face))
+;;           ((wordreference--class-equal el "CO")
+;;            (wordreference--insert-propertized-el el 'default))
+;;           ((dom-by-class el "examplecontainer")
+;;            (wordreference--format-other-dict-entry  el)))))
+
+;; "phrase example PHEG"
+;; "example translation"
+;; "IN"
+;; "phrase"
+;; "catsecondary category"
+;; "headnumber"
+
 (defun wordreference-print-collins-dict (parsed)
   "Print collins dictionary results.
 PARSED is the data to use."
   (with-current-buffer "*wordreference*"
     (goto-char (point-max))
     (let ((inhibit-read-only t)
+          (title (dom-text (dom-by-class parsed "small1")))
           (div (dom-by-class parsed "clickableHC")))
-      (wordreference-print-heading "Collins Dictionary:")
+      (wordreference-print-heading "Collins Dictionary:\n\n")
       ;; TODO: parse Collins results
+      ;; (wordreference--format-collins-entry div))
       (insert "\n"
               (dom-texts div)))
     (goto-char (point-min))))
@@ -507,6 +538,10 @@ BUFFER is the buffer that was current when we invoked the wordreference command.
           ;; no propertize if no threads:
           (insert "\n\n" (dom-texts (car forum-links)))
         (wordreference-print-forum-links forum-links-propertized))
+      ;; collins dictionary:
+      ;; URL doesn't always work :/
+      ;; (wordreference--retrieve-parse-html word source target :collins)
+      ;; variables:
       (setq-local header-line-format
                   (propertize
                    (format "Wordreference results for \"%s\" from %s to %s:"
@@ -521,15 +556,16 @@ BUFFER is the buffer that was current when we invoked the wordreference command.
                     source-lang target-lang)))
       (setq-local wordreference-nearby-entries
                   (wordreference--get-nearby-entries html-parsed))
+      ;; buttons:
       (wordreference--make-buttons)
+      ;; highlight search query:
       (wordreference-prop-query-in-results word)
       (goto-char (point-min))))
   ;; handle searching again from wr:
   ;; because this is a callback, `current-buffer' = http response
   (unless (equal (buffer-name buffer) "*wordreference*")
     (switch-to-buffer-other-window (get-buffer "*wordreference*")))
-  (message "w/s: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms, C: copy search term, n: browse nearby entries, S: switch langs and search, l: search with linguee.com, c: browse on www.cntrl.fr, r: search with reverso.el.")
-  (wordreference--retrieve-parse-html word source target :collins))
+  (message "w/s: search again, ./,: next/prev heading, b: view in browser, TAB: jump to terms, C: copy search term, n: browse nearby entries, S: switch langs and search, l: search with linguee.com, c: browse on www.cntrl.fr, r: search with reverso.el."))
 
 (defun wordreference-prop-query-in-results (query)
   "Propertize string QUERY in results buffer."

@@ -775,13 +775,13 @@ SOURCE-OR-TARGET is a symbol to be added as a type property."
   "Format other dictionary entry LI, based on each element's dom class."
   (dolist (el (dom-children li))
     (cond ((wordreference--class-equal el "arab headnumber")
-           (wordreference--insert-opertized-el el 'font-lock-builtin-face))
+           (wordreference--insert-propertized-el el 'font-lock-builtin-face))
           ((wordreference--class-equal el "ital")
-           (wordreference--insert-opertized-el el '(t :slant italic)))
+           (wordreference--insert-propertized-el el '(t :slant italic)))
           ((wordreference--class-equal el "roman")
-           (wordreference--insert-opertized-el el 'font-lock-builtin-face))
+           (wordreference--insert-propertized-el el 'font-lock-builtin-face))
           ((wordreference--class-equal el "example phrase ex")
-           (wordreference--insert-opertized-el el 'default))
+           (wordreference--insert-propertized-el el 'default))
           ((dom-by-class el "examplecontainer")
            (wordreference--format-other-dict-entry  el)))))
 
@@ -789,9 +789,9 @@ SOURCE-OR-TARGET is a symbol to be added as a type property."
   "Non-nil if dom EL has class `equal' to STR."
   (equal (dom-attr el 'class) str))
 
-(defun wordreference--insert-opertized-el (el face)
+(defun wordreference--insert-propertized-el (el face)
   "Insert the text of EL propertized with FACE."
-  (insert (propertize (dom-text el)
+  (insert (propertize (if (listp el) (dom-text el) el)
                       'face face)))
 
 (defun wordreference--print-other-dicts (dom)

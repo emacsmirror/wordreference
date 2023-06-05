@@ -451,27 +451,32 @@ example for an example, and other for everything else."
   (dolist (el (dom-children elements))
     (cond ((stringp el)
            (wordreference--insert-propertized-el el '(t :slant italic)))
+          ((or (dom-by-class el "category")
+               (dom-by-class el "catsecondary category"))
+           (wordreference--format-collins-entry  el))
           ((wordreference--class-equal el "clickableHC")
            (wordreference--insert-propertized-el el 'font-lock-builtin-face))
           ((wordreference--class-equal el "ps")
            (wordreference--insert-propertized-el el 'font-lock-builtin-face))
           ((wordreference--class-equal el "phonetics")
            (wordreference--insert-propertized-el el 'font-lock-builtin-face))
+          ((wordreference--class-equal el "ital")
+           (wordreference--insert-propertized-el el '(t :slant italic)))
           ((wordreference--class-equal el "hw")
            (wordreference--insert-propertized-el el '(t :slant italic)))
-          ((wordreference--class-equal el "category")
+          ((wordreference--class-equal el "SN")
+           (wordreference--insert-propertized-el el 'font-lock-builtin-face))
+          ((wordreference--class-equal el "headnumber")
            (wordreference--insert-propertized-el el 'font-lock-builtin-face))
           ((wordreference--class-equal el "CO")
            (wordreference--insert-propertized-el el 'default))
-          ((dom-by-class el "examplecontainer")
-           (wordreference--format-other-dict-entry  el)))))
+          ((wordreference--class-equal el "IN")
+           (wordreference--insert-propertized-el el 'default))
+          ((or (wordreference--class-equal el "phrase")
+               (wordreference--class-equal el "phrase example PHEG")
+               (wordreference--class-equal el "example translation"))
+           (wordreference--insert-propertized-el el 'default)))))
 
-;; ;; "phrase example PHEG"
-;; ;; "example translation"
-;; ;; "IN"
-;; ;; "phrase"
-;; ;; "catsecondary category"
-;; ;; "headnumber"
 
 (defun wordreference-print-collins-dict (parsed)
   "Print collins dictionary results.
@@ -481,7 +486,10 @@ PARSED is the data to use."
     (let ((inhibit-read-only t)
           (title (dom-text (dom-by-class parsed "small1")))
           (div (dom-by-class parsed "clickableHC")))
-      (wordreference-print-heading "Collins Dictionary:\n\n")
+      (wordreference-print-heading "Collins Dictionary:\n")
+      (setq wr-parsed-coll parsed)
+      (wordreference--insert-propertized-el title 'font-lock-comment-face)
+      (insert "\n")
       ;; TODO: parse Collins results
       (wordreference--format-collins-entry div))
     ;; (insert "\n"
@@ -826,8 +834,10 @@ SOURCE-OR-TARGET is a symbol to be added as a type property."
 
 (defun wordreference--insert-propertized-el (el face)
   "Insert the text of EL propertized with FACE."
-  (insert (propertize (if (listp el) (dom-text el) el)
-                      'face face)))
+  (let* ((el (if (listp el) (dom-text el) el))
+         (str (string-replace "\\\n" "\n" el)))
+    (insert (propertize str
+                        'face face))))
 
 (defun wordreference--print-other-dicts (dom)
   "Print other dictionaries DOM."

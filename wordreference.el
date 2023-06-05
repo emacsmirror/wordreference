@@ -446,32 +446,32 @@ example for an example, and other for everything else."
 ;;; PRINTING:
 
 
-;; (defun wordreference--format-collins-entry (elements)
-;;   "Format Collins dictionary entry ELEMENTS, based on each element's dom class."
-;;   (dolist (el (dom-children elements))
-;;     (cond ((stringp el)
-;;            (wordreference--insert-propertized-el el '(t :slant italic)))
-;;           ((wordreference--class-equal el "clickableHC")
-;;            (wordreference--insert-propertized-el el 'font-lock-builtin-face))
-;;           ((wordreference--class-equal el "ps")
-;;            (wordreference--insert-propertized-el el 'font-lock-builtin-face))
-;;           ((wordreference--class-equal el "phonetics")
-;;            (wordreference--insert-propertized-el el 'font-lock-builtin-face))
-;;           ((wordreference--class-equal el "hw")
-;;            (wordreference--insert-propertized-el el '(t :slant italic)))
-;;           ((wordreference--class-equal el "category")
-;;            (wordreference--insert-propertized-el el 'font-lock-builtin-face))
-;;           ((wordreference--class-equal el "CO")
-;;            (wordreference--insert-propertized-el el 'default))
-;;           ((dom-by-class el "examplecontainer")
-;;            (wordreference--format-other-dict-entry  el)))))
+(defun wordreference--format-collins-entry (elements)
+  "Format Collins dictionary entry ELEMENTS, based on each element's dom class."
+  (dolist (el (dom-children elements))
+    (cond ((stringp el)
+           (wordreference--insert-propertized-el el '(t :slant italic)))
+          ((wordreference--class-equal el "clickableHC")
+           (wordreference--insert-propertized-el el 'font-lock-builtin-face))
+          ((wordreference--class-equal el "ps")
+           (wordreference--insert-propertized-el el 'font-lock-builtin-face))
+          ((wordreference--class-equal el "phonetics")
+           (wordreference--insert-propertized-el el 'font-lock-builtin-face))
+          ((wordreference--class-equal el "hw")
+           (wordreference--insert-propertized-el el '(t :slant italic)))
+          ((wordreference--class-equal el "category")
+           (wordreference--insert-propertized-el el 'font-lock-builtin-face))
+          ((wordreference--class-equal el "CO")
+           (wordreference--insert-propertized-el el 'default))
+          ((dom-by-class el "examplecontainer")
+           (wordreference--format-other-dict-entry  el)))))
 
-;; "phrase example PHEG"
-;; "example translation"
-;; "IN"
-;; "phrase"
-;; "catsecondary category"
-;; "headnumber"
+;; ;; "phrase example PHEG"
+;; ;; "example translation"
+;; ;; "IN"
+;; ;; "phrase"
+;; ;; "catsecondary category"
+;; ;; "headnumber"
 
 (defun wordreference-print-collins-dict (parsed)
   "Print collins dictionary results.
@@ -483,9 +483,9 @@ PARSED is the data to use."
           (div (dom-by-class parsed "clickableHC")))
       (wordreference-print-heading "Collins Dictionary:\n\n")
       ;; TODO: parse Collins results
-      ;; (wordreference--format-collins-entry div))
-      (insert "\n"
-              (dom-texts div)))
+      (wordreference--format-collins-entry div))
+    ;; (insert "\n"
+    ;;         (dom-texts div)))
     (goto-char (point-min))))
 
 (defun wordreference-print-translation-buffer (word html-parsed &optional source target buffer)
@@ -539,8 +539,7 @@ BUFFER is the buffer that was current when we invoked the wordreference command.
           (insert "\n\n" (dom-texts (car forum-links)))
         (wordreference-print-forum-links forum-links-propertized))
       ;; collins dictionary:
-      ;; URL doesn't always work :/
-      ;; (wordreference--retrieve-parse-html word source target :collins)
+      (wordreference--retrieve-parse-html word source-lang target-lang :collins)
       ;; variables:
       (setq-local header-line-format
                   (propertize

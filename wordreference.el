@@ -832,12 +832,13 @@ SOURCE-OR-TARGET is a symbol to be added as a type property."
   "Non-nil if dom EL has class `equal' to STR."
   (equal (dom-attr el 'class) str))
 
-(defun wordreference--insert-propertized-el (el face)
+(defun wordreference--insert-propertized-el (dom face)
   "Insert the text of EL propertized with FACE."
-  (let* ((el (if (listp el) (dom-text el) el))
+  (let* ((el (if (listp dom) (dom-text dom) dom))
+         (span-p (when (listp dom) (eq (dom-tag dom) 'span)))
          (str (string-replace "\\\n" "\n" el)))
-    (insert (propertize str
-                        'face face))))
+    (insert (propertize str 'face face))
+    (when span-p (insert " "))))
 
 (defun wordreference--print-other-dicts (dom)
   "Print other dictionaries DOM."

@@ -487,7 +487,7 @@ PARSED is the data to use."
           (title (dom-text (dom-by-class parsed "small1")))
           (div (dom-by-class parsed "clickableHC")))
       (wordreference-print-heading "Collins Dictionary:\n")
-      (setq wr-parsed-coll parsed)
+      ;; (setq wr-parsed-coll parsed)
       (wordreference--insert-propertized-el title 'font-lock-comment-face)
       (insert "\n")
       ;; TODO: parse Collins results
@@ -833,7 +833,7 @@ SOURCE-OR-TARGET is a symbol to be added as a type property."
   (equal (dom-attr el 'class) str))
 
 (defun wordreference--insert-propertized-el (dom face)
-  "Insert the text of EL propertized with FACE."
+  "Insert the text of DOM propertized with FACE."
   (let* ((el (if (listp dom) (dom-text dom) dom))
          (span-p (when (listp dom) (eq (dom-tag dom) 'span)))
          (str (string-replace "\\\n" "\n" el)))

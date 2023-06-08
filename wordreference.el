@@ -364,10 +364,14 @@ followed by a list of textual results returned by
     (cl-loop
      for x in text-string-split
      when x
-     collect (thread-first x
-                           (string-trim)
-                           (string-clean-whitespace)
-                           (wordreference--cull-conj-arrows)))))
+     collect (if (version< emacs-version "28.1")
+                 (thread-first x
+                               (string-trim)
+                               (wordreference--cull-conj-arrows))
+               (thread-first x
+                             (string-trim)
+                             (string-clean-whitespace)
+                             (wordreference--cull-conj-arrows))))))
 
 (defun wordreference-build-to-fr-td (td)
   "Build a TD when it is of type FrWrd or ToWrd."
@@ -600,14 +604,24 @@ TRS is the list of table rows from the parsed HTML."
 (defun wordreference--process-sense-string (str)
   "Remove unwanted characters from a context/sense string STR."
   (when str
-    (thread-first
-      str
-      (wordreference--cull-space-between-brackets)
-      (wordreference--cull-single-spaces-in-brackets)
-      (string-clean-whitespace)
-      (string-trim
-       "[ \\t\\n\\r ]+" ;; add our friend  
-       "[ \\t\\n\\r ]+"))))
+    (if (version< emacs-version "28.1")
+        ;; looks like conditional clauses don't work inside ->?
+        (thread-first
+          str
+          (wordreference--cull-space-between-brackets)
+          (wordreference--cull-single-spaces-in-brackets)
+          ;; (string-clean-whitespace)
+          (string-trim
+           "[ \\t\\n\\r ]+" ;; add our friend  
+           "[ \\t\\n\\r ]+"))
+      (thread-first
+        str
+        (wordreference--cull-space-between-brackets)
+        (wordreference--cull-single-spaces-in-brackets)
+        (string-clean-whitespace)
+        (string-trim
+         "[ \\t\\n\\r ]+" ;; add our friend  
+         "[ \\t\\n\\r ]+")))))
 
 (defun wordreference-print-single-definition (def)
   "Print a single definition DEF in the buffer.

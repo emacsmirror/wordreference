@@ -45,6 +45,8 @@
 (require 'cl-lib)
 (require 'transient)
 
+(eval-when-compile (require 'subr-x))
+
 (when (require 'pdf-tools nil :no-error)
   (declare-function pdf-view-active-region-text "pdf-view"))
 

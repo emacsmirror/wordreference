@@ -451,7 +451,6 @@ example for an example, and other for everything else."
 
 ;;; PRINTING:
 
-
 (defun wordreference--format-collins-entry (elements)
   "Format Collins dictionary entry ELEMENTS, based on each element's dom class."
   (dolist (el (dom-children elements))
@@ -482,7 +481,6 @@ example for an example, and other for everything else."
                (wordreference--class-equal el "phrase example PHEG")
                (wordreference--class-equal el "example translation"))
            (wordreference--insert-propertized-el el 'default)))))
-
 
 (defun wordreference-print-collins-dict (parsed)
   "Print collins dictionary results.
@@ -853,7 +851,7 @@ SOURCE-OR-TARGET is a symbol to be added as a type property."
   (let* ((el (if (listp dom) (dom-text dom) dom))
          (span-p (when (listp dom) (eq (dom-tag dom) 'span)))
          (str ;(string-replace "\\\n" "\n" el)))
-          (wordreference--replace-in-string "\\\n" "\n" el)))
+          (wordreference--replace-in-string "\\\n" "\n" el :no-loop)))
     (insert (propertize str 'face face))
     (when span-p (insert " "))))
 
@@ -889,15 +887,19 @@ SOURCE-OR-TARGET is a symbol to be added as a type property."
             (wordreference-insert-also-found-list
              also-list))))
 
-(defun wordreference--replace-in-string (from to string)
-  "Replace all instances of FROM with TO in STRING."
+(defun wordreference--replace-in-string (from to string &optional no-loop)
+  "Replace all instances of FROM with TO in STRING.
+If NO-LOOP, only replace a single instance."
   ;; emacs 28.1:
   ;; (string-replace from to string)
   (let ((result string))
     (save-match-data
-      (while (string-match from result)
-        (setq result (replace-match to t nil result)))
-      result)))
+      (if no-loop
+          (when (string-match from result)
+            (setq result (replace-match to t nil result)))
+        (while (string-match from result)
+          (setq result (replace-match to t nil result)))))
+    result))
 
 (defun wordreference-print-also-found-entries (html)
   "Insert a propertized list of 'also found in' entries.

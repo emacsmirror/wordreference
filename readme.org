@@ -35,6 +35,7 @@ Minimum emacs version is 28.1. If you have an older emacs, you may just need to 
 - =r= to search the same term with [[https://github.com/SqrtMinusOne/reverso.el][reverso.el]]
 - =S= to swap source and target and search for same term again
 - =v= to immediately search most recent item in the kill ring.
+- =?= to view these commands.
 
 ** screenshot 
 

@@ -852,7 +852,8 @@ SOURCE-OR-TARGET is a symbol to be added as a type property."
   "Insert the text of DOM propertized with FACE."
   (let* ((el (if (listp dom) (dom-text dom) dom))
          (span-p (when (listp dom) (eq (dom-tag dom) 'span)))
-         (str (string-replace "\\\n" "\n" el)))
+         (str ;(string-replace "\\\n" "\n" el)))
+          (wordreference--replace-in-string "\\\n" "\n" el)))
     (insert (propertize str 'face face))
     (when span-p (insert " "))))
 
@@ -888,20 +889,32 @@ SOURCE-OR-TARGET is a symbol to be added as a type property."
             (wordreference-insert-also-found-list
              also-list))))
 
+(defun wordreference--replace-in-string (from to string)
+  "Replace all instances of FROM with TO in STRING."
+  ;; emacs 28.1:
+  ;; (string-replace from to string)
+  (let ((result string))
+    (save-match-data
+      (while (string-match from result)
+        (setq result (replace-match to t nil result)))
+      result)))
+
 (defun wordreference-print-also-found-entries (html)
   "Insert a propertized list of 'also found in' entries.
 HTML is what our original query returned."
   (let* ((also-found (dom-by-id html "FTintro"))
          (also-found-heading (string-trim (dom-texts also-found)))
          (also-found-langs (dom-by-class html "FTsource"))
-         (also-found-source (string-replace
+         (also-found-source (wordreference--replace-in-string
                              " " ""
                              (string-trim
-                              (dom-texts (car also-found-langs)))))
-         (also-found-target (string-replace
+                              (dom-texts
+                               (car also-found-langs)))))
+         (also-found-target (wordreference--replace-in-string
                              " " ""
                              (string-trim
-                              (dom-texts (cdr also-found-langs)))))
+                              (dom-texts
+                               (cdr also-found-langs)))))
          (also-list (dom-by-class html "FTlist"))
          (also-list-source (dom-by-tag (car also-list) 'a))
          (also-list-target (dom-by-tag (cdr also-list) 'a)))

@@ -48,7 +48,7 @@ Contributions and feedback are welcome. Feel free to make suggestions, either by
 
 ** other packages
 
-You may also be interested in [[https://github.com/mtenders/emacs-leo][emacs-leo]].
+You may also be interested in my fork of [[https://codeberg.org/martianh/emacs-leo][emacs-leo]].
 
 ** To-do
 

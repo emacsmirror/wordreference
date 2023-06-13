@@ -71,6 +71,9 @@ It must match one of the dictionaries in `helm-dictionary-database'.")))
   (declare-function pdf-view-active-region-text "pdf-view")
   (declare-function pdf-view-active-region-p "pdf-view"))
 
+(when (require 'wiktionary-bro nil :no-error)
+  (declare-function wiktionary-bro "wiktionary-bro"))
+
 (defgroup wordreference nil
   "Wordreference dictionary interface."
   :group 'wordreference)
@@ -163,6 +166,8 @@ Its form is like this:
     (define-key map (kbd "p") #'wordreference-prev-entry)
     (when (require 'reverso nil :no-error)
       (define-key map (kbd "r") #'wordreference-browse-term-reverso))
+    (when (require 'wiktionary-bro nil :no-error)
+      (define-key map (kbd "k") #'wordreference-browse-term-wiktionary-bro))
     (define-key map (kbd ",") #'wordreference-previous-heading)
     (define-key map (kbd ".") #'wordreference-next-heading)
     (define-key map (kbd "RET") #'wordreference-return-search-word)
@@ -1322,6 +1327,12 @@ Requires `sdcv' to be installed, and the XMLittre dictionary."
          ;; (if is-brief
          ;; (reverso--translate-render-brief query data)
          (reverso--translate-render query data))))))
+
+(defun wordreference-browse-term-wiktionary-bro ()
+  "Look up current term using `wiktionary-bro.el'."
+  (interactive)
+  (let ((term (wordreference-get-results-info-item 'term)))
+    (wiktionary-bro term)))
 
 (defun wordreference--fetch-lang-info-from-abbrev (source target)
   "Use two-letter SOURCE and TARGET abbrevs to collect full language pair.

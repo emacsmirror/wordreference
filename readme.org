@@ -16,7 +16,7 @@ The package has been tested with French <> English and Portuguese <> English. Ot
 
 If you already have it set up, you can simply call =M-x package-install RET wordreference=.
 
-Minimum emacs version is 28.1. If you have an older emacs, you may just need to replace the 2 calls to =string-clean-whitespace= and it should work.
+Minimum emacs version is now 27.1.
 
 ** In the results buffer:
 

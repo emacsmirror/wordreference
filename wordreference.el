@@ -47,8 +47,29 @@
 
 (eval-when-compile (require 'subr-x))
 
+(when (require 'helm nil :no-error)
+  (when (require 'helm-dictionary nil :noerror)
+    (declare-function helm-dictionary "helm-dictionary")
+    (declare-function helm-dictionary-build "helm-dictionary")
+    (declare-function helm "helm")
+    (defvar helm-dictionary-database)
+    (defvar helm-source-dictionary-online)
+    (defvar wordreference-helm-dictionary-name "fr-en"
+      "The name of the dictionary to use for `helm-dictionary' queries.
+It must match one of the dictionaries in `helm-dictionary-database'.")))
+
+(when (require 'sdcv nil :noerror)
+  (declare-function sdcv-search-detail "sdcv")
+  (defvar sdcv-dictionary-complete-list))
+
+(when (require 'reverso nil :no-error)
+  (declare-function reverso--translate "reverso")
+  (declare-function reverso--translate-render "reverso")
+  (declare-function reverso--with-buffer "reverso"))
+
 (when (require 'pdf-tools nil :no-error)
-  (declare-function pdf-view-active-region-text "pdf-view"))
+  (declare-function pdf-view-active-region-text "pdf-view")
+  (declare-function pdf-view-active-region-p "pdf-view"))
 
 (defgroup wordreference nil
   "Wordreference dictionary interface."
@@ -1215,49 +1236,38 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
                                nil)))
     (wordreference-search nil word)))
 
-(when (require 'helm nil :no-error)
-  (when (require 'helm-dictionary nil :noerror)
-    (declare-function helm-dictionary "helm-dictionary")
-    (declare-function helm-dictionary-build "helm-dictionary")
-    (declare-function helm "helm")
-    (defvar helm-dictionary-database)
-    (defvar helm-source-dictionary-online)
-    (defvar wordreference-helm-dictionary-name "fr-en"
-      "The name of the dictionary to use for `helm-dictionary' queries.
-It must match one of the dictionaries in `helm-dictionary-database'."))
-
-  (defun wordreference-helm-dictionary (&optional dict-name query not-full)
-    "Load our modified version of `helm-dictionary'.
+(defun wordreference-helm-dictionary (&optional dict-name query not-full)
+  "Load our modified version of `helm-dictionary'.
 Optionally, use only dictionary DICT-NAME and provide input QUERY.
 NOT-FULL means to not display in full-frame."
-    (let* ((dict (assoc dict-name helm-dictionary-database))
-           (helm-source-dictionary
-            (if (and dict
-                     (member dict
-                             helm-dictionary-database))
-                (helm-dictionary-build (car dict) (cdr dict))
-              (mapcar
-               (lambda (x) (helm-dictionary-build (car x) (cdr x)))
-               (if (stringp helm-dictionary-database)
-                   (list (cons "Search dictionary" helm-dictionary-database))
-                 helm-dictionary-database))))
-           (input (or query (thing-at-point 'word))))
-      (helm :sources (append helm-source-dictionary (list helm-source-dictionary-online))
-            :full-frame (if not-full nil t)
-            :default input
-            :input (when query input)
-            :candidate-number-limit 500
-            :buffer "*helm dictionary*")))
+  (let* ((dict (assoc dict-name helm-dictionary-database))
+         (helm-source-dictionary
+          (if (and dict
+                   (member dict
+                           helm-dictionary-database))
+              (helm-dictionary-build (car dict) (cdr dict))
+            (mapcar
+             (lambda (x) (helm-dictionary-build (car x) (cdr x)))
+             (if (stringp helm-dictionary-database)
+                 (list (cons "Search dictionary" helm-dictionary-database))
+               helm-dictionary-database))))
+         (input (or query (thing-at-point 'word))))
+    (helm :sources (append helm-source-dictionary (list helm-source-dictionary-online))
+          :full-frame (if not-full nil t)
+          :default input
+          :input (when query input)
+          :candidate-number-limit 500
+          :buffer "*helm dictionary*")))
 
-  ;; NB: runs on a modified `helm-dictionary'!:
-  (defun wordreference-helm-dict-search ()
-    "Search for term in `helm-dictionary'.
+;; NB: runs on a modified `helm-dictionary'!:
+(defun wordreference-helm-dict-search ()
+  "Search for term in `helm-dictionary'.
 \nUses the dictionary specified in `wordreference-helm-dictionary-name'."
-    (interactive)
-    (let ((query (concat "\\b"
-                         (wordreference-get-results-info-item 'term)
-                         "\\b")))
-      (wordreference-helm-dictionary wordreference-helm-dictionary-name query t))))
+  (interactive)
+  (let ((query (concat "\\b"
+                       (wordreference-get-results-info-item 'term)
+                       "\\b")))
+    (wordreference-helm-dictionary wordreference-helm-dictionary-name query t)))
 
 (defun wordreference-browse-term-cntrl ()
   "Search for the same term on https://www.cntrl.fr.
@@ -1268,14 +1278,13 @@ Really only works for single French terms."
     (browse-url-generic (concat "https://www.cnrtl.fr/definition/"
                                 query))))
 
-(when (require 'sdcv nil :noerror)
-  (defun wordreference-browse-term-sdcv-littre ()
-    "Search for current term in `sdcv' using XMLittre dictionary.
+(defun wordreference-browse-term-sdcv-littre ()
+  "Search for current term in `sdcv' using XMLittre dictionary.
 Requires `sdcv' to be installed, and the XMLittre dictionary."
-    (interactive)
-    (let ((term (plist-get wordreference-results-info 'term))
-          (sdcv-dictionary-complete-list '("XMLittre")))
-      (sdcv-search-detail term))))
+  (interactive)
+  (let ((term (plist-get wordreference-results-info 'term))
+        (sdcv-dictionary-complete-list '("XMLittre")))
+    (sdcv-search-detail term)))
 
 (defun wordreference-browse-term-linguee ()
   "Search for current term in browser with Linguee.com."
@@ -1293,31 +1302,26 @@ Requires `sdcv' to be installed, and the XMLittre dictionary."
                          "/search?query="
                          query-final))))
 
-(when (require 'reverso nil :no-error)
-  (declare-function reverso--translate "reverso")
-  (declare-function reverso--translate-render "reverso")
-  (declare-function reverso--with-buffer "reverso")
-
-  (defun wordreference-browse-term-reverso ()
-    "Search for current term with reverso.com"
-    (interactive)
-    (let* ((query (wordreference-get-results-info-item 'term))
-           (source (intern
-                    (downcase
-                     (wordreference-get-results-info-item 'source-full))))
-           (target (intern
-                    (downcase
-                     (wordreference-get-results-info-item 'target-full)))))
-      (type-of source)
-      (reverso--translate
-       query
-       source
-       target
-       (lambda (data)
-         (reverso--with-buffer
-           ;; (if is-brief
-           ;; (reverso--translate-render-brief query data)
-           (reverso--translate-render query data)))))))
+(defun wordreference-browse-term-reverso ()
+  "Search for current term with reverso.com."
+  (interactive)
+  (let* ((query (wordreference-get-results-info-item 'term))
+         (source (intern
+                  (downcase
+                   (wordreference-get-results-info-item 'source-full))))
+         (target (intern
+                  (downcase
+                   (wordreference-get-results-info-item 'target-full)))))
+    (type-of source)
+    (reverso--translate
+     query
+     source
+     target
+     (lambda (data)
+       (reverso--with-buffer
+         ;; (if is-brief
+         ;; (reverso--translate-render-brief query data)
+         (reverso--translate-render query data))))))
 
 (defun wordreference--fetch-lang-info-from-abbrev (source target)
   "Use two-letter SOURCE and TARGET abbrevs to collect full language pair.

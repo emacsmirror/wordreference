@@ -212,6 +212,13 @@ Its form is like this:
     (define-key map (kbd "RET") #'wordreference-shr-browse-url-secondary)
     map))
 
+(defvar wordreference-forum-entry-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [mouse-2] #'wordreference-render-forum-entry)
+    (define-key map (kbd "RET") #'wordreference-render-forum-entry)
+    (define-key map (kbd "b") #'wordreference-shr-browse-url-secondary)
+    map))
+
 (cl-defstruct (wordreference-term (:constructor wordreference-term-create))
   term type pos usage tooltip)
 
@@ -986,7 +993,7 @@ HTML is what our original query returned."
                                  'button t
                                  'follow-link t
                                  'shr-url forum-href
-                                 'keymap wordreference-link-map
+                                 'keymap wordreference-forum-entry-map
                                  'fontified t
                                  'face 'warning
                                  'mouse-face 'highlight
@@ -998,6 +1005,35 @@ HTML is what our original query returned."
   (cl-loop for x in links
            when x ; skip all our empties
            collect (insert "\n\n" x)))
+
+(defun wordreference-render-forum-entry ()
+  "Render the forum entry at point in a temporary buffer."
+  (interactive)
+  (let* ((url (get-text-property (point) 'shr-url))
+         (response (url-retrieve-synchronously url))
+         (html (with-current-buffer response
+                 (re-search-forward "\n\n")
+                 (buffer-substring-no-properties (point) (point-max))))
+         (section (with-temp-buffer
+                    (switch-to-buffer (current-buffer))
+                    (erase-buffer)
+                    (insert html)
+                    (web-mode) ; so forward-sexp works
+                    (goto-char (point-min))
+                    (save-match-data
+                      (buffer-substring-no-properties
+                       (progn (re-search-forward "<div class=\"p-body-main")
+                              (match-beginning 0))
+                       (progn (goto-char (match-beginning 0))
+                              (forward-sexp)
+                              (point))))))
+         (unhex (rfc6068-unhexify-string section)))
+    (with-temp-buffer
+      (let ((inhibit-read-only t))
+        (insert unhex)
+        (switch-to-buffer (current-buffer))
+        (shr-render-buffer (current-buffer))
+        (view-mode)))))
 
 ;; DID YOU MEAN results:
 

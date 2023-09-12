@@ -1014,7 +1014,8 @@ HTML is what our original query returned."
          (html (with-current-buffer response
                  (re-search-forward "\n\n")
                  (buffer-substring-no-properties (point) (point-max))))
-         (section (with-temp-buffer
+         ;; with-temp-buffer breaks forward-sexp:
+         (section (with-current-buffer (get-buffer-create "*wr-html*")
                     (switch-to-buffer (current-buffer))
                     (erase-buffer)
                     (insert html)
@@ -1028,6 +1029,7 @@ HTML is what our original query returned."
                               (forward-sexp)
                               (point))))))
          (unhex (rfc6068-unhexify-string section)))
+    (kill-buffer "*wr-html*")
     (with-temp-buffer
       (let ((inhibit-read-only t))
         (insert unhex)

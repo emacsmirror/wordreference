@@ -178,7 +178,7 @@ Its form is like this:
   "Keymap for wordreference mode.")
 
 (transient-define-prefix wordreference-dispatch ()
-  "wordreference results commands"
+  "Wordreference results commands."
   ["wordreference results commands"
    [("TAB" "next button" forward-button)
     ("<backtab>" "previous button" backward-button)
@@ -811,7 +811,7 @@ and target term, or an example sentence."
 
 (defun wordreference--insert-terms-and-conj (terms source-or-target)
   "Print a string of results and their conjunction links if any.
-TERMS is plist of '((\"term\" \"conjunction-link\")).
+TERMS is plist of \=((\"term\" \"conjunction-link\")).
 SOURCE-OR-TARGET is a symbol to be added as a type property."
   (mapconcat (lambda (x)
                (concat
@@ -935,7 +935,7 @@ If NO-LOOP, only replace a single instance."
     result))
 
 (defun wordreference-print-also-found-entries (html)
-  "Insert a propertized list of 'also found in' entries.
+  "Insert a propertized list of \"also found in\" entries.
 HTML is what our original query returned."
   (let* ((also-found (dom-by-id html "FTintro"))
          (also-found-heading (string-trim (dom-texts also-found)))
@@ -963,7 +963,7 @@ HTML is what our original query returned."
        "\n\n"))))
 
 (defun wordreference-insert-also-found-list (list)
-  "Propertize a LIST of 'also found in' entries."
+  "Propertize a LIST of \"also found in\" entries."
   (mapconcat (lambda (x)
                (let* ((link (dom-by-tag x 'a))
                       (link-text (dom-text link))
@@ -1258,7 +1258,7 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
   (interactive)
   (let ((term (wordreference-get-results-info-item 'term)))
     (kill-new term)
-    (message (concat "\"" term "\" copied to clipboard."))))
+    (message (concat "\""" term "\" copied to clipboard."))))
 
 (defun wordreference-switch-source-target-and-search ()
   "Search for same term with source and target reversed."

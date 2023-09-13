@@ -1260,7 +1260,7 @@ Uses `wordreference-browse-url-function' to decide which browser to use."
   (interactive)
   (let ((term (wordreference-get-results-info-item 'term)))
     (kill-new term)
-    (message (concat "\""" term "\" copied to clipboard."))))
+    (message (concat "\"" term "\" copied to clipboard."))))
 
 (defun wordreference-switch-source-target-and-search ()
   "Search for same term with source and target reversed."

@@ -25,6 +25,7 @@ Minimum emacs version is now 27.1.
 -  =<return>= when on an entry to do a new search for that entry
 - =click= on a word in an entry to search for just that single word
 - =<return>= to open a usage note, conjugation table or forum entry in external browser
+- =click= on a forum entry to view it in a new buffer using =shr.el=.s
 - =,= / =.= to go to the previous/next heading
 - =b= to view page in external browser
 - =C= to copy current search term

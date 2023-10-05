@@ -1158,7 +1158,10 @@ Optionally move to PREV ious match, and optionally RECENTER the buffer."
   "Get result entry near point."
   (wordreference-cull-brackets-from-entry
    (buffer-substring-no-properties
-    (progn (if (looking-back "[ \t\n]" nil) ; enter range if we tabbed here
+    (progn (if (or (eq (char-before) ? )
+                   (eq (char-before) ?\n)
+                   (eq (char-before) ?\t)) ; way faster than `looking-back'
+               ;; (looking-back "[ \t\n]" nil) ; enter range if we tabbed here
                (forward-char))
            (previous-single-property-change (point) 'button)) ; range start
     (next-single-property-change (point) 'button))))

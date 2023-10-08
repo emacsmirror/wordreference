@@ -44,6 +44,7 @@
 (require 'text-property-search)
 (require 'cl-lib)
 (require 'transient)
+(require 'rfc6068)
 
 (eval-when-compile (require 'subr-x))
 
@@ -51,16 +52,16 @@
   (when (require 'helm-dictionary nil :noerror)
     (declare-function helm-dictionary "helm-dictionary")
     (declare-function helm-dictionary-build "helm-dictionary")
-    (declare-function helm "helm")
-    (defvar helm-dictionary-database)
-    (defvar helm-source-dictionary-online)
-    (defvar wordreference-helm-dictionary-name "fr-en"
-      "The name of the dictionary to use for `helm-dictionary' queries.
-It must match one of the dictionaries in `helm-dictionary-database'.")))
+    (declare-function helm "helm")))
+(defvar helm-dictionary-database)
+(defvar helm-source-dictionary-online)
+(defvar wordreference-helm-dictionary-name "fr-en"
+  "The name of the dictionary to use for `helm-dictionary' queries.
+It must match one of the dictionaries in `helm-dictionary-database'.")
 
 (when (require 'sdcv nil :noerror)
-  (declare-function sdcv-search-detail "sdcv")
-  (defvar sdcv-dictionary-complete-list))
+  (declare-function sdcv-search-detail "sdcv"))
+(defvar sdcv-dictionary-complete-list)
 
 (when (require 'reverso nil :no-error)
   (declare-function reverso--translate "reverso")
@@ -1019,7 +1020,7 @@ HTML is what our original query returned."
                     (switch-to-buffer (current-buffer))
                     (erase-buffer)
                     (insert html)
-                    (web-mode) ; so forward-sexp works
+                    (mhtml-mode) ; so forward-sexp works
                     (goto-char (point-min))
                     (save-match-data
                       (buffer-substring-no-properties
@@ -1431,7 +1432,7 @@ With a PREFIX arg, prompt for source and target language pair."
     (wordreference-search nil word)))
 
 (defun wordreference--prompt-lang (type prefix)
-  "Prompt for lang of TYPE 'source or 'target.
+  "Prompt for lang of TYPE source or target.
 PREFIX is the prefix arg test."
   (if prefix
       (completing-read (if (eql type 'source)

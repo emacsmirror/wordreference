@@ -75,6 +75,24 @@ It must match one of the dictionaries in `helm-dictionary-database'.")
 (when (require 'wiktionary-bro nil :no-error)
   (declare-function wiktionary-bro "wiktionary-bro"))
 
+;; via https://github.com/SqrtMinusOne/reverso.el, thanks Korytov Pavel!
+(defconst wordreference-user-agents
+  '("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36"
+    "Mozilla/5.0 (X11; Linux x86_64; rv:103.0) Gecko/20100101 Firefox/103.0"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:103.0) Gecko/20100101 Firefox/103.0"
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36"
+    "Mozilla/5.0 (Windows NT 10.0; rv:103.0) Gecko/20100101 Firefox/103.0"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6 Safari/605.1.15"
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:103.0) Gecko/20100101 Firefox/103.0")
+  "User-Agents to use for wordreference.el requests.
+A random one is picked at package initialization.")
+
+(defvar wordreference-user-agent
+  (nth (random (length wordreference-user-agents))
+       wordreference-user-agents)
+  "User-Agent to use for wordreference.el requests.")
+
 (defgroup wordreference nil
   "Wordreference dictionary interface."
   :group 'wordreference)
@@ -243,7 +261,8 @@ Its form is like this:
 
 (defun wordreference--get-supported-lang-pairs ()
   "Query wordreference.com for supported language pairs."
-  (let* ((html-buffer (url-retrieve-synchronously
+  (let* ((url-user-agent wordreference-user-agent)
+         (html-buffer (url-retrieve-synchronously
                        wordreference-base-url))
          (html-parsed (wordreference--parse-html-buffer html-buffer))
          (langs (dom-by-tag
@@ -285,6 +304,7 @@ COLLINS means we are fetching collins dictionary data instead."
 Optionally specify SOURCE and TARGET languages.
 COLLINS means we are fetching collins dictionary data instead."
   (let* ((url (wordreference--construct-url source target word collins))
+         (url-user-agent wordreference-user-agent)
          (calling-buffer (current-buffer)))
     (url-retrieve url
                   'wordreference--parse-async
@@ -1011,6 +1031,7 @@ HTML is what our original query returned."
   "Render the forum entry at point in a temporary buffer."
   (interactive)
   (let* ((url (get-text-property (point) 'shr-url))
+         (url-user-agent wordreference-user-agent)
          (response (url-retrieve-synchronously url))
          (html (with-current-buffer response
                  (re-search-forward "\n\n")
@@ -1045,7 +1066,8 @@ HTML is what our original query returned."
 From SOURCE language to TARGET language, as two letter language codes."
   (let ((url
          (concat "https://spell.wordreference.com/spell/spelljs.php?dict="
-                 source target "&w=" word)))
+                 source target "&w=" word))
+        (url-user-agent wordreference-user-agent))
     (url-retrieve
      url
      (lambda (_status)

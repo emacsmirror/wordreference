@@ -1442,8 +1442,8 @@ With a PREFIX arg, prompt for source and target language pair."
          (region (wordreference--get-region))
          (word (or word
                    (read-string (format "Wordreference search (%s): "
-                                        (or region (current-word) ""))
-                                nil nil (or region (current-word))))))
+                                        (or region (word-at-point) ""))
+                                nil nil (or region (word-at-point))))))
     (wordreference--retrieve-parse-html word source target)))
 
 ;;;###autoload
@@ -1451,7 +1451,7 @@ With a PREFIX arg, prompt for source and target language pair."
   "Seach wordreference for current region or word at point."
   (interactive)
   (let ((word (or (wordreference--get-region)
-                  (current-word))))
+                  (word-at-point))))
     (wordreference-search nil word)))
 
 (defun wordreference--prompt-lang (type prefix)

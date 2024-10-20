@@ -55,7 +55,7 @@ You may also be interested in my fork of [[https://codeberg.org/martianh/emacs-l
 
 If you'd like to support continued development of =wordreference.el=, I accept
 donations via paypal: [[https://paypal.me/martianh][paypal.me/martianh]]. If you would prefer a different
-payment method, please write to me at <martianhiatus [at] riseup [dot] net> and I can
+payment method, please write to me at <mousebot@disroot.org> and I can
 provide IBAN or other bank account details.
 
 I don't have a tech worker's income, so even a small tip would help out.

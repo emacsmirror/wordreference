@@ -534,7 +534,12 @@ example for an example, and other for everything else."
           ((or (wordreference--class-equal el "phrase")
                (wordreference--class-equal el "phrase example PHEG")
                (wordreference--class-equal el "example translation"))
-           (wordreference--insert-propertized-el el 'default)))))
+           (wordreference--insert-propertized-el el 'default))
+          (t ;; fallback
+           (if (listp el)
+               (insert
+                (dom-texts el))
+             (wordreference--insert-propertized-el el 'default))))))
 
 (defun wordreference-print-collins-dict (parsed)
   "Print collins dictionary results.
@@ -545,6 +550,7 @@ PARSED is the data to use."
           (title (dom-text (dom-by-class parsed "small1")))
           (collins (dom-by-class parsed "clickableHC")))
       (when collins
+        (insert "\n\n")
         (wordreference-print-heading "Collins Dictionary:\n")
         (wordreference--insert-propertized-el title 'font-lock-comment-face)
         (insert "\n")
@@ -600,7 +606,8 @@ BUFFER is the buffer that was current when we invoked the wordreference command.
       (wordreference-print-heading forum-heading-string)
       (if (dom-by-class forum-links "noThreads")
           ;; no propertize if no threads:
-          (insert "\n\n" (dom-texts (car forum-links)))
+          (insert "\n" (propertize (dom-texts (car forum-links))
+                                   'face 'shadow))
         (wordreference-print-forum-links forum-links-propertized))
       ;; collins dictionary:
       (wordreference--retrieve-parse-html word source-lang target-lang :collins)
@@ -925,7 +932,8 @@ SOURCE-OR-TARGET is a symbol to be added as a type property."
          (list (or (dom-by-tag langen 'ul)
                    (dom-by-tag langen 'ol)))
          (list-ch (dom-children list)))
-    (when list
+    (if (not list)
+        (insert (dom-texts langen) "\n\n") ;; fallback
       (wordreference-print-heading "Other Dictionaries:")
       (insert "\n"
               (propertize title
@@ -979,7 +987,7 @@ HTML is what our original query returned."
          (also-list (dom-by-class html "FTlist"))
          (also-list-source (dom-by-tag (car also-list) 'a))
          (also-list-target (dom-by-tag (cdr also-list) 'a)))
-    (when also-found
+    (when also-found-langs ;; also-found doesn't work as pred
       (wordreference-print-heading also-found-heading)
       (insert
        (wordreference--concat-also-found-string also-found-source

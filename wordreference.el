@@ -892,7 +892,12 @@ SOURCE-OR-TARGET is a symbol to be added as a type property."
           ((wordreference--class-equal el "example phrase ex")
            (wordreference--insert-propertized-el el 'default))
           ((dom-by-class el "examplecontainer")
-           (wordreference--format-other-dict-entry  el)))))
+           (wordreference--format-other-dict-entry  el))
+          (t ;; fallback:
+           (if (listp el)
+               (insert
+                (dom-texts el))
+             (wordreference--insert-propertized-el el 'default))))))
 
 (defun wordreference--class-equal (el str)
   "Non-nil if dom EL has class `equal' to STR."
@@ -914,9 +919,11 @@ SOURCE-OR-TARGET is a symbol to be added as a type property."
            (dom-search dom
                        (lambda (n) ; generalize this:
                          (string-prefix-p "Wörterbuch" (dom-text n))))))
-         (langen (dom-by-class dom "entry langenscheidt")) ; generalize this
+         (langen (or (dom-by-class dom "entry langenscheidt")
+                     (dom-by-class dom "langenscheidt"))) ; generalize this
          (term (dom-texts (dom-by-class langen "hw"))) ; get POS also?
-         (list (dom-by-tag langen 'ul))
+         (list (or (dom-by-tag langen 'ul)
+                   (dom-by-tag langen 'ol)))
          (list-ch (dom-children list)))
     (when list
       (wordreference-print-heading "Other Dictionaries:")

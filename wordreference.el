@@ -543,18 +543,16 @@ PARSED is the data to use."
     (goto-char (point-max))
     (let ((inhibit-read-only t)
           (title (dom-text (dom-by-class parsed "small1")))
-          (div (dom-by-class parsed "clickableHC")))
-      (wordreference-print-heading "Collins Dictionary:\n")
-      ;; (setq wr-parsed-coll parsed)
-      (wordreference--insert-propertized-el title 'font-lock-comment-face)
-      (insert "\n")
-      ;; TODO: parse Collins results
-      (wordreference--format-collins-entry div))
-    ;; (insert "\n"
-    ;;         (dom-texts div)))
+          (collins (dom-by-class parsed "clickableHC")))
+      (when collins
+        (wordreference-print-heading "Collins Dictionary:\n")
+        (wordreference--insert-propertized-el title 'font-lock-comment-face)
+        (insert "\n")
+        (wordreference--format-collins-entry collins)))
     (goto-char (point-min))))
 
-(defun wordreference-print-translation-buffer (word html-parsed &optional source target buffer)
+(defun wordreference-print-translation-buffer (word html-parsed
+                                                    &optional source target buffer)
   "Print translation results in buffer.
 WORD is the search query, HTML-PARSED is what our query returned.
 SOURCE and TARGET are languages.

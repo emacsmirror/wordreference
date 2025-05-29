@@ -354,13 +354,15 @@ COLLINS means we are fetching collins dictionary data instead."
 
 (defun wordreference-extract-lang-code-from-td (td)
   "Extract a two letter language code from TD."
-  ;; format is "sLang_en", but is it always?
+  ;; old version:
+  ;; (substring-no-properties
+  ;;  (dom-attr
+  ;;   (dom-by-tag td 'span)
+  ;;   'data-ph)
+  ;;  -2))) ;last two chars
   (when td
-    (substring-no-properties
-     (dom-attr
-      (dom-by-tag td 'span)
-      'data-ph)
-     -2))) ;last two chars
+    (dom-attr (dom-by-tag td 'em)
+              'data-lang)))
 
 (defun wordreference-collect-trs-results-list (trs)
   "Process the results found in TRS.

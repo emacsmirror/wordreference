@@ -1531,8 +1531,10 @@ REGION is the current region as a string."
 
 (defun wordreference-annot-fun (sug)
   "Annotate search suggestion SUG with its lang code."
-  (when-let* ((entry (assoc sug wordreference-completion-table)))
-    (concat " \t" (nth 1 entry))))
+  (when-let* ((entry (assoc sug wordreference-completion-table))
+              (leng (length (nth 0 entry))))
+    ;; 2 tabs for entries up to 6 chars:
+    (format " \t%s%s" (if (> leng 6) "" "\t") (nth 1 entry))))
 
 (defun wordreference--get-suggestions (input)
   "Return suggestions data for INPUT, a string.

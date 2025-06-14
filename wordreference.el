@@ -1511,7 +1511,7 @@ REGION is the current region as a string."
   (let ((init (or region (current-word))))
     (if (not wordreference-search-suggestions)
         ;; no suggestions:
-        (read-string (format "Leo search (%s): " init)
+        (read-string (format "Wordreference search (%s): " init)
                      nil nil init)
       ;; built-in dynamic completion:
       (wordreference-translate-suggest region))))

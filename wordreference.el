@@ -1509,7 +1509,8 @@ STR is an input string."
 (defun wordreference-read-query (&optional region)
   "Return a search query, maybe with search suggestions completion.
 REGION is the current region as a string."
-  (let ((init (or region (current-word))))
+  ;; current-word counts this/that as one word, word-at-point doesn't:
+  (let ((init (or region (word-at-point))))
     (if (not wordreference-search-suggestions)
         ;; no suggestions:
         (read-string (format "Wordreference search (%s): " init)
@@ -1522,7 +1523,8 @@ REGION is the current region as a string."
 Completions are annotated by `wordreference-annot-fun'.
 REGION is the current region as a string."
   (let ((completion-ignore-case t)
-        (init (or region (current-word)))
+          ;; current-word counts this/that as one word, word-at-point doesn't:
+        (init (or region (word-at-point)))
         (completion-extra-properties
          '(:annotation-function wordreference-annot-fun)))
     (completing-read

@@ -1456,10 +1456,13 @@ With a PREFIX arg, prompt for source and target language pair."
                      (wordreference--prompt-lang 'target prefix)))
 
          (region (wordreference--get-region))
-         (word (or word (wordreference-read-query region))))
+         (word (or word (wordreference-read-query region source target))))
     ;; (read-string (format "Wordreference search (%s): "
     ;;                      (or region (word-at-point) ""))
     ;;              nil nil (or region (word-at-point))))))
+    ;; nil suggestions lang vars:
+    (setq wordreference-source nil
+          wordreference-target nil)
     (wordreference--retrieve-parse-html word source target)))
 
 ;;;###autoload
@@ -1492,10 +1495,28 @@ PREFIX is the prefix arg test."
   "Whether to enable search suggestions (autocomplete)."
   :type 'boolean)
 
+(defvar-local wordreference-source nil)
+(defvar-local wordreference-target nil)
+
 (defvar-local wordreference-completion-table nil
   "The data for the current suggestions.
 If we knew how to access the current completion collection, we wouldn't
 need this.")
+
+(defun wordreference-read-query (&optional region source target)
+  "Return a search query, maybe with search suggestions completion.
+REGION is the current region as a string."
+  ;; current-word counts this/that as one word, word-at-point doesn't:
+  (let ((init (or region (word-at-point))))
+    (if (not wordreference-search-suggestions)
+        ;; no suggestions:
+        (read-string (format "Wordreference search (%s): " init)
+                     nil nil init)
+      ;; built-in dynamic completion:
+      ;; set suggestions lang vars (we nil these again upon loading results)
+      (setq wordreference-source source
+            wordreference-target target)
+      (wordreference-translate-suggest region))))
 
 (defun wordreference-dynamic-complete (str)
   "Function for `completion-table-dynamic'.
@@ -1506,30 +1527,18 @@ STR is an input string."
       (setq wordreference-completion-table
             (wordreference--get-suggestions str)))))
 
-(defun wordreference-read-query (&optional region)
-  "Return a search query, maybe with search suggestions completion.
-REGION is the current region as a string."
-  ;; current-word counts this/that as one word, word-at-point doesn't:
-  (let ((init (or region (word-at-point))))
-    (if (not wordreference-search-suggestions)
-        ;; no suggestions:
-        (read-string (format "Wordreference search (%s): " init)
-                     nil nil init)
-      ;; built-in dynamic completion:
-      (wordreference-translate-suggest region))))
-
 (defun wordreference-translate-suggest (&optional region)
   "Call completing read with `wordreference-dynamic-complete'.
 Completions are annotated by `wordreference-annot-fun'.
 REGION is the current region as a string."
   (let ((completion-ignore-case t)
-          ;; current-word counts this/that as one word, word-at-point doesn't:
+        ;; current-word counts this/that as one word, word-at-point doesn't:
         (init (or region (word-at-point)))
         (completion-extra-properties
          '(:annotation-function wordreference-annot-fun)))
     (completing-read
      (format "Wordreference search%s: " (if init (format " (%s)" init) ""))
-     (completion-table-dynamic #'wordreference-dynamic-complete)
+     (completion-table-dynamic #'wordreference-dynamic-complete :switch)
      nil nil region nil init)))
 
 (defun wordreference-annot-fun (sug)
@@ -1537,6 +1546,7 @@ REGION is the current region as a string."
   (when-let* ((entry (assoc sug wordreference-completion-table))
               (leng (length (nth 0 entry))))
     ;; 2 tabs for entries up to 6 chars:
+    (message "%s" (nth 1 entry))
     (format " \t%s%s" (if (> leng 6) "" "\t") (nth 1 entry))))
 
 (defun wordreference--get-suggestions (input)
@@ -1544,11 +1554,16 @@ REGION is the current region as a string."
 Returns a nested list of suggestions.
 Each suggestion is a four-item list, containing the term, the lang code,
 what is likely a ranking, and a forth, mysterious value, string of 0 or 1."
-  (let* ((url
+  (let* ((source (or wordreference-source
+                     (plist-get wordreference-results-info 'source)
+                     wordreference-source-lang))
+         (target (or wordreference-target
+                     (plist-get wordreference-results-info 'target)
+                     wordreference-target-lang))
+         (url
           (format
            "https://www.wordreference.com/autocomplete?dict=%s%s\
-&query=%s" wordreference-source-lang wordreference-target-lang
-           input))
+&query=%s" source target input))
          (resp (url-retrieve-synchronously url))
          (raw (with-current-buffer resp
                 (goto-char (point-min))

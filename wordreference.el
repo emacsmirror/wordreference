@@ -1538,7 +1538,7 @@ REGION is the current region as a string."
          '(:annotation-function wordreference-annot-fun)))
     (completing-read
      (format "Wordreference search%s: " (if init (format " (%s)" init) ""))
-     (completion-table-dynamic #'wordreference-dynamic-complete :switch)
+     (completion-table-dynamic #'wordreference-dynamic-complete)
      nil nil region nil init)))
 
 (defun wordreference-annot-fun (sug)

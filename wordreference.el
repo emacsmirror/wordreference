@@ -1450,11 +1450,12 @@ PREFIX is same as for that function."
 Optionally specify WORD, SOURCE and TARGET languages.
 With a PREFIX arg, prompt for source and target language pair."
   (interactive "P")
-  (let* ((source (or source             ;from lisp
-                     (wordreference--prompt-lang 'source prefix)))
-         (target (or target
-                     (wordreference--prompt-lang 'target prefix)))
-
+  (let* ((source
+          (or source             ; from lisp
+              (wordreference--prompt-lang 'source prefix)))
+         (target
+          (or target
+              (wordreference--prompt-lang 'target prefix)))
          (region (wordreference--get-region))
          (word (or word (wordreference-read-query region source target))))
     ;; (read-string (format "Wordreference search (%s): "
@@ -1495,8 +1496,8 @@ PREFIX is the prefix arg test."
   "Whether to enable search suggestions (autocomplete)."
   :type 'boolean)
 
-(defvar-local wordreference-source nil)
-(defvar-local wordreference-target nil)
+(defvar wordreference-source nil)
+(defvar wordreference-target nil)
 
 (defvar-local wordreference-completion-table nil
   "The data for the current suggestions.
@@ -1554,10 +1555,10 @@ REGION is the current region as a string."
 Returns a nested list of suggestions.
 Each suggestion is a four-item list, containing the term, the lang code,
 what is likely a ranking, and a forth, mysterious value, string of 0 or 1."
-  (let* ((source (or wordreference-source
+  (let* ((source (or wordreference-source ;; prefix arg
                      (plist-get wordreference-results-info 'source)
                      wordreference-source-lang))
-         (target (or wordreference-target
+         (target (or wordreference-target ;; prefix arg
                      (plist-get wordreference-results-info 'target)
                      wordreference-target-lang))
          (url

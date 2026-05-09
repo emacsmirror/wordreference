@@ -1,7 +1,7 @@
 ;;; wordreference.el --- Interface for wordreference.com -*- lexical-binding:t -*-
 ;;
 ;; Author: Marty Hiatt <mousebot@disroot.org>
-;; Copyright (C) 2022 Marty Hiatt <mousebot@disroot.org>
+;; Copyright (C) 2022 Marty Hiatt <martianh@disroot.org>
 ;;
 ;; Package-Requires: ((emacs "28.1"))
 ;; Keywords: convenience, translate, wp, dictionary

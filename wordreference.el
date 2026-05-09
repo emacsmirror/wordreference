@@ -1,7 +1,7 @@
 ;;; wordreference.el --- Interface for wordreference.com -*- lexical-binding:t -*-
 ;;
 ;; Author: Marty Hiatt <mousebot@disroot.org>
-;; Copyright (C) 2022 Marty Hiatt <mousebot@disroot.org>
+;; Copyright (C) 2022 Marty Hiatt <martianh@disroot.org>
 ;;
 ;; Package-Requires: ((emacs "28.1"))
 ;; Keywords: convenience, translate, wp, dictionary
@@ -354,13 +354,15 @@ COLLINS means we are fetching collins dictionary data instead."
 
 (defun wordreference-extract-lang-code-from-td (td)
   "Extract a two letter language code from TD."
-  ;; format is "sLang_en", but is it always?
+  ;; old version:
+  ;; (substring-no-properties
+  ;;  (dom-attr
+  ;;   (dom-by-tag td 'span)
+  ;;   'data-ph)
+  ;;  -2))) ;last two chars
   (when td
-    (substring-no-properties
-     (dom-attr
-      (dom-by-tag td 'span)
-      'data-ph)
-     -2))) ;last two chars
+    (dom-attr (dom-by-tag td 'em)
+              'data-lang)))
 
 (defun wordreference-collect-trs-results-list (trs)
   "Process the results found in TRS.
@@ -752,75 +754,76 @@ TRS is the list of table rows from the parsed HTML."
   "Print a single definition DEF in the buffer.
 For now a definition can be a set of source term, context term,
 and target term, or an example sentence."
-  (cond ((wordreference-note-p (car def))
-         (insert
-          "\n -- "
-          (propertize (wordreference-note-note (car def))
-                      'face '(:height 0.8 :box t))))
-        ((wordreference-example-p  (car def))
-         (insert
-          "\n -- "
-          (propertize (wordreference-example-eg (car def))
-                      'face '(:height 0.8)
-                      'help-echo (wordreference-example-tooltip (car def)))))
-        (t
-         (let* ((source (car def))
-                (source-terms
-                 (wordreference-term-term source));)
-                (source-pos (wordreference-term-pos source))
-                (source-sense (when (wordreference-sense-p (cadr def))
-                                (wordreference--process-sense-string
-                                 (wordreference-sense-from-sense (cadr def)))))
-                (register (when (wordreference-sense-p (cadr def))
-                            (wordreference-sense-register (cadr def))))
-                (target (caddr def))
-                (target-terms (wordreference-term-term target))
-                (target-sense (when (wordreference-sense-p (cadr def))
-                                (wordreference--process-sense-string
-                                 (wordreference-sense-to-sense (cadr def)))))
-                (target-pos (wordreference-term-pos target))
-                (usage (wordreference-term-usage source)))
+  (when def ;; FIXME: for some reasong now we get nil as first def
+    (cond ((wordreference-note-p (car def))
            (insert
-            "\n"
-            (concat
-             " "
-             (when source-terms
-               (if (eq (wordreference-term-type source) 'repeat)
-                   (propertize (wordreference-term-term source)
-                               'face font-lock-comment-face)
+            "\n -- "
+            (propertize (wordreference-note-note (car def))
+                        'face '(:height 0.8 :box t))))
+          ((wordreference-example-p  (car def))
+           (insert
+            "\n -- "
+            (propertize (wordreference-example-eg (car def))
+                        'face '(:height 0.8)
+                        'help-echo (wordreference-example-tooltip (car def)))))
+          (t
+           (let* ((source (car def))
+                  (source-terms
+                   (wordreference-term-term source));)
+                  (source-pos (wordreference-term-pos source))
+                  (source-sense (when (wordreference-sense-p (cadr def))
+                                  (wordreference--process-sense-string
+                                   (wordreference-sense-from-sense (cadr def)))))
+                  (register (when (wordreference-sense-p (cadr def))
+                              (wordreference-sense-register (cadr def))))
+                  (target (caddr def))
+                  (target-terms (wordreference-term-term target))
+                  (target-sense (when (wordreference-sense-p (cadr def))
+                                  (wordreference--process-sense-string
+                                   (wordreference-sense-to-sense (cadr def)))))
+                  (target-pos (wordreference-term-pos target))
+                  (usage (wordreference-term-usage source)))
+             (insert
+              "\n"
+              (concat
+               " "
+               (when source-terms
+                 (if (eq (wordreference-term-type source) 'repeat)
+                     (propertize (wordreference-term-term source)
+                                 'face font-lock-comment-face)
+                   (concat
+                    "\n" ; newline if not a repeat term
+                    (when usage
+                      (concat (wordreference--propertize-usage-marker usage)
+                              " "))
+                    (wordreference--insert-terms-and-conj source-terms 'source)
+                    " ")))
+               (propertize (or source-pos
+                               "")
+                           'face font-lock-comment-face
+                           'help-echo (when (wordreference-term-p source)
+                                        (wordreference-term-tooltip source)))
+               " "
+               (when register
                  (concat
-                  "\n" ; newline if not a repeat term
-                  (when usage
-                    (concat (wordreference--propertize-usage-marker usage)
-                            " "))
-                  (wordreference--insert-terms-and-conj source-terms 'source)
-                  " ")))
-             (propertize (or source-pos
-                             "")
-                         'face font-lock-comment-face
-                         'help-echo (when (wordreference-term-p source)
-                                      (wordreference-term-tooltip source)))
-             " "
-             (when register
-               (concat
-                (wordreference--propertize-register-or-sense register)
-                " "))
-             (when source-sense
-               (wordreference--propertize-register-or-sense source-sense))
-             "\n           "
-             (propertize "--> "
-                         'face font-lock-comment-face)
-             (when target-terms
-               (wordreference-unpropertize-source-phrase-in-target
-                (wordreference--insert-terms-and-conj target-terms 'target)))
-             " "
-             (propertize (or target-pos
-                             "")
-                         'face font-lock-comment-face
-                         'help-echo (wordreference-term-tooltip target))
-             (when target-sense
-               (concat " "
-                       (wordreference--propertize-register-or-sense target-sense)))))))))
+                  (wordreference--propertize-register-or-sense register)
+                  " "))
+               (when source-sense
+                 (wordreference--propertize-register-or-sense source-sense))
+               "\n           "
+               (propertize "--> "
+                           'face font-lock-comment-face)
+               (when target-terms
+                 (wordreference-unpropertize-source-phrase-in-target
+                  (wordreference--insert-terms-and-conj target-terms 'target)))
+               " "
+               (propertize (or target-pos
+                               "")
+                           'face font-lock-comment-face
+                           'help-echo (wordreference-term-tooltip target))
+               (when target-sense
+                 (concat " "
+                         (wordreference--propertize-register-or-sense target-sense))))))))))
 
 (defun wordreference--propertize-usage-marker (usage-url)
   "Propertize a usage marker for USAGE-URL."
@@ -1447,16 +1450,20 @@ PREFIX is same as for that function."
 Optionally specify WORD, SOURCE and TARGET languages.
 With a PREFIX arg, prompt for source and target language pair."
   (interactive "P")
-  (let* ((source (or source             ;from lisp
-                     (wordreference--prompt-lang 'source prefix)))
-         (target (or target
-                     (wordreference--prompt-lang 'target prefix)))
-
+  (let* ((source
+          (or source             ; from lisp
+              (wordreference--prompt-lang 'source prefix)))
+         (target
+          (or target
+              (wordreference--prompt-lang 'target prefix)))
          (region (wordreference--get-region))
-         (word (or word
-                   (read-string (format "Wordreference search (%s): "
-                                        (or region (word-at-point) ""))
-                                nil nil (or region (word-at-point))))))
+         (word (or word (wordreference-read-query region source target))))
+    ;; (read-string (format "Wordreference search (%s): "
+    ;;                      (or region (word-at-point) ""))
+    ;;              nil nil (or region (word-at-point))))))
+    ;; nil suggestions lang vars:
+    (setq wordreference-source nil
+          wordreference-target nil)
     (wordreference--retrieve-parse-html word source target)))
 
 ;;;###autoload
@@ -1482,6 +1489,92 @@ PREFIX is the prefix arg test."
      (if (eql type 'source)
          wordreference-source-lang
        wordreference-target-lang))))
+
+;;; SEARCH SUGGESTIONS
+
+(defcustom wordreference-search-suggestions t
+  "Whether to enable search suggestions (autocomplete)."
+  :type 'boolean)
+
+(defvar wordreference-source nil)
+(defvar wordreference-target nil)
+
+(defvar-local wordreference-completion-table nil
+  "The data for the current suggestions.
+If we knew how to access the current completion collection, we wouldn't
+need this.")
+
+(defun wordreference-read-query (&optional region source target)
+  "Return a search query, maybe with search suggestions completion.
+REGION is the current region as a string."
+  ;; current-word counts this/that as one word, word-at-point doesn't:
+  (let ((init (or region (word-at-point))))
+    (if (not wordreference-search-suggestions)
+        ;; no suggestions:
+        (read-string (format "Wordreference search (%s): " init)
+                     nil nil init)
+      ;; built-in dynamic completion:
+      ;; set suggestions lang vars (we nil these again upon loading results)
+      (setq wordreference-source source
+            wordreference-target target)
+      (wordreference-translate-suggest region))))
+
+(defun wordreference-dynamic-complete (str)
+  "Function for `completion-table-dynamic'.
+Used in `wordreference-translate-suggest'.
+STR is an input string."
+  (unless (string-empty-p str)
+    (when (length> str 2)
+      (setq wordreference-completion-table
+            (wordreference--get-suggestions str)))))
+
+(defun wordreference-translate-suggest (&optional region)
+  "Call completing read with `wordreference-dynamic-complete'.
+Completions are annotated by `wordreference-annot-fun'.
+REGION is the current region as a string."
+  (let ((completion-ignore-case t)
+        ;; current-word counts this/that as one word, word-at-point doesn't:
+        (init (or region (word-at-point)))
+        (completion-extra-properties
+         '(:annotation-function wordreference-annot-fun)))
+    (completing-read
+     (format "Wordreference search%s: " (if init (format " (%s)" init) ""))
+     (completion-table-dynamic #'wordreference-dynamic-complete)
+     nil nil region nil init)))
+
+(defun wordreference-annot-fun (sug)
+  "Annotate search suggestion SUG with its lang code."
+  (when-let* ((entry (assoc sug wordreference-completion-table))
+              (leng (length (nth 0 entry))))
+    ;; 2 tabs for entries up to 6 chars:
+    (message "%s" (nth 1 entry))
+    (format " \t%s%s" (if (> leng 6) "" "\t") (nth 1 entry))))
+
+(defun wordreference--get-suggestions (input)
+  "Return suggestions data for INPUT, a string.
+Returns a nested list of suggestions.
+Each suggestion is a four-item list, containing the term, the lang code,
+what is likely a ranking, and a forth, mysterious value, string of 0 or 1."
+  (let* ((source (or wordreference-source ;; prefix arg
+                     (plist-get wordreference-results-info 'source)
+                     wordreference-source-lang))
+         (target (or wordreference-target ;; prefix arg
+                     (plist-get wordreference-results-info 'target)
+                     wordreference-target-lang))
+         (url
+          (format
+           "https://www.wordreference.com/autocomplete?dict=%s%s\
+&query=%s" source target input))
+         (resp (url-retrieve-synchronously url))
+         (raw (with-current-buffer resp
+                (goto-char (point-min))
+                (re-search-forward "\n\n")
+                (decode-coding-string
+                 (buffer-substring-no-properties (point) (point-max))
+                 'utf-8)))
+         (split (split-string raw "\n")))
+    (cl-loop for x in split
+             collect (split-string x "\t"))))
 
 (define-derived-mode wordreference-mode special-mode "wordreference"
   :group 'wordreference

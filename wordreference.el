@@ -1,6 +1,6 @@
 ;;; wordreference.el --- Interface for wordreference.com -*- lexical-binding:t -*-
 ;;
-;; Author: Marty Hiatt <mousebot@disroot.org>
+;; Author: Marty Hiatt <martianh@disroot.org>
 ;; Copyright (C) 2022 Marty Hiatt <martianh@disroot.org>
 ;;
 ;; Package-Requires: ((emacs "28.1"))
